@@ -1,6 +1,6 @@
 # Especificação de Requisitos
 
-Documento consolidado derivado do PRD. IDs alinhados ao PRD para rastreabilidade.
+Documento consolidado derivado do PRD e coerente com `docs/problem_statement.md` (problema, público e objetivo do produto). IDs alinhados ao PRD para rastreabilidade.
 
 ## Requisitos funcionais
 

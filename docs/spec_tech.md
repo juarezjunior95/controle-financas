@@ -2,7 +2,7 @@
 
 ## Visão Geral Técnica
 
-Este documento orienta desenvolvimento e operações do produto **Finanças PUC Minas** (nome de trabalho). Público: desenvolvedores e DevOps. Objetivo: definir arquitetura de referência, stack, segurança, APIs e diretrizes para desenvolvimento assistido por IA.
+Este documento orienta desenvolvimento e operações do produto de **finanças pessoais** deste repositório (nome de pasta/código: `controle-financas`; nomes comerciais podem evoluir). Público: desenvolvedores e DevOps. Objetivo: definir arquitetura de referência, stack, segurança, APIs e diretrizes para desenvolvimento assistido por IA.
 
 ---
 

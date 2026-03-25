@@ -2,15 +2,15 @@
 
 ## Descrição do produto
 
-**Problema** Estudantes da PUC Minas têm dificuldade em acompanhar receitas e despesas de forma contínua e simples; o controle disperso em planilhas e anotações aumenta estresse e atrasos na tomada de decisão.
+**Problema** Pessoas que querem organizar finanças pessoais (CLT, autônomos, estudantes e perfis mistos) enfrentam registros dispersos em planilhas, cadernos e apps pouco integrados; falta visibilidade clara de para onde o dinheiro vai e do saldo mensal, o que dificulta decisões, planejamento e poupança.
 
 **Solução** Uma aplicação web responsiva para registro rápido de lançamentos, categorização, visão por período e metas financeiras simples, com dados isolados por usuário.
 
-Para o **estudante universitário (PUC Minas e perfil equivalente)** ganhos em **clareza do orçamento mensal**, **menos tempo para organizar finanças** e **sensação de controle** sobre gastos acadêmicos e pessoais.
+Para quem busca **controle de gastos** e **economia consistente**, ganhos em **clareza do orçamento mensal**, **menos tempo para organizar finanças** e **sensação de controle** sobre o fluxo do dia a dia.
 
 Nossos Diferenciais:
 
-- Foco no contexto acadêmico (categorias e exemplos próximos da rotina de curso)
+- Linguagem e categorias pensadas para **vida real** (trabalho, estudos, moradia, lazer), sem jargão de “ERP pessoal”
 - Fluxos curtos: lançar em segundos no celular
 - Privacidade: conta individual; sem venda de dados como premissa de v1
 - Escopo enxuto na v1 — evitar “ERP pessoal”
@@ -19,13 +19,15 @@ Nossos Diferenciais:
 
 ## Perfis de Usuário
 
-### Estudante (primário)
+### Pessoa em busca de controle financeiro (primário)
 
-- Problemas: renda irregular; esquecimento de gastos pequenos; dificuldade em ver “quanto sobrou” no mês
-- Objetivos: pagar contas em dia; saber limite semanal de gastos; poupar para metas
-- Dados demográficos: 19–28 anos; graduação/pós; uso intensivo de smartphone
-- Motivações: independência, redução de ansiedade, planejar estágio/viagem/material
-- Frustrações: apps genéricos confusos; planilhas que não abre no ônibus; medo de expor dados
+Representa o conjunto **CLT**, **autônomo/freelancer** e **estudante** (ou combinações, ex.: estágio + faculdade).
+
+- Problemas: registros espalhados; renda fixa ou variável sem visão única do mês; esquecimento de gastos pequenos; dificuldade em ver “quanto sobrou” e onde cortar
+- Objetivos: pagar contas em dia; saber quanto pode gastar no período; poupar ou quitar dívidas; reduzir ansiedade com dinheiro
+- Dados demográficos: jovens adultos e adultos; uso intensivo de smartphone; tolerância baixa a ferramentas complexas
+- Motivações: previsibilidade, independência, metas (viagem, equipamento, reserva, investimento inicial)
+- Frustrações: apps genéricos confusos; planilhas difíceis de manter no trânsito; medo de expor dados; sensação de “não saber por onde começar”
 
 ### Administrador do produto (interno)
 
@@ -55,7 +57,7 @@ Nossos Diferenciais:
 
 ### RFN-03 Categorias
 
-- Conjunto inicial sugerido (Alimentação, Transporte, Estudos, Moradia, Lazer, Saúde, Outros); usuário pode criar/editar categorias próprias.
+- Conjunto inicial sugerido, adaptável a quem estuda, trabalha em CLT ou por conta própria: Alimentação, Transporte, Moradia, Saúde, Lazer, Estudos e trabalho, Outros; usuário pode criar/editar categorias próprias.
 - Critérios de Aceitação:
   - Todo lançamento exige categoria válida
   - Exclusão de categoria: reatribuir ou bloquear se houver lançamentos (definir na implementação — preferir bloquear com mensagem na v1)

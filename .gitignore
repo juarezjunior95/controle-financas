@@ -9,3 +9,9 @@ build/
 .idea/
 .vscode/
 coverage/
+
+# Cursor (skills, regras) — não constam como entregáveis do roteiro de discovery
+.cursor/
+
+# Checklist auxiliar em formato de tarefas — o roteiro já define entregas em texto corrido
+docs/CHECKLIST_DISCOVERY.md

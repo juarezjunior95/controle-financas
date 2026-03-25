@@ -6,6 +6,7 @@
 
 | Tema | Achado | Ação aplicada |
 |------|--------|----------------|
+| Problema / público | `problem_statement.md` ampliado para CLT, autônomos e estudantes | PRD, `definicao_problema.md`, spec UI, design system, prompt de protótipo e spec técnica (nome do produto) revisados para o mesmo contexto |
 | Metas v1 | PRD menciona progresso manual; UI poderia sugerir automação | Mantido manual na v1; UI especifica barra de progresso e campos explícitos |
 | Recuperação de senha | PRD indica v1.1 | UI: link presente mas pode ficar desabilitado até v1.1 |
 | Categorias | PRD: exclusão com lançamentos | spec_req e spec_ui alinhados com bloqueio ou reatribuição; v1 = bloqueio com mensagem |

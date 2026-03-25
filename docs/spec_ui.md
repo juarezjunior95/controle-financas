@@ -84,7 +84,7 @@
 4. **Lançamentos** → **Categorias** (atalho) → retorno
 5. Qualquer área logada → **Perfil** / **Sair** → Login
 
-Fluxo feliz primeiro lançamento: pós-cadastro, CTA “Registrar primeiro gasto” leva ao formulário com dicas de categorias acadêmicas.
+Fluxo feliz primeiro lançamento: pós-cadastro, CTA “Registrar primeiro gasto” leva ao formulário com dicas de categorias alinhadas à rotina (moradia, transporte, alimentação, trabalho/estudos, etc.).
 
 ---
 
@@ -94,4 +94,4 @@ Fluxo feliz primeiro lançamento: pós-cadastro, CTA “Registrar primeiro gasto
 - Paleta e tipografia devem seguir `docs/design_system.md`.
 - Não adicionar telas fora desta lista sem atualizar este documento e o PRD.
 - Formulários: labels visíveis, mensagens de erro associadas ao campo (`aria-describedby`).
-- Evitar jargão financeiro pesado; linguagem simples para estudantes.
+- Evitar jargão financeiro pesado; linguagem simples para quem não é especialista em finanças.

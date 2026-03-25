@@ -51,7 +51,7 @@ Resultado esperado:
 ```
 
 - Revise o documento e faça os devidos ajustes.
-- Registre o problema no arquivo docs/definicao_problema.md.
+- Registre o problema em `docs/problem_statement.md` e mantenha `docs/definicao_problema.md` alinhado (mesmo conteúdo ou referência explícita à fonte única).
 
 ---
 

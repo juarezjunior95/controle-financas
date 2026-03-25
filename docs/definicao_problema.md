@@ -1,19 +1,21 @@
 # Declaração de Problema
 
+> Este arquivo espelha o conteúdo acordado em `docs/problem_statement.md` (fonte única para discovery). Qualquer alteração deve ser feita nos dois para manter alinhamento.
+
 ## 1. Problema
 
-Estudantes da PUC Minas (e perfis similares no ensino superior) precisam conciliar renda irregular (bolsa, estágio, família), custos recorrentes (transporte, alimentação, materiais, mensalidade) e metas de curto prazo (provas, férias, equipamentos). Sem um lugar simples e confiável para registrar e visualizar o fluxo de caixa, o controle financeiro vira planilhas espalhadas, anotações soltas ou “cabeça”, gerando estresse, decisões tardias e risco de inadimplência ou cortes necessários em itens essenciais.
+Pessoas que querem organizar as finanças pessoais enfrentam **fragmentação** entre onde registram entradas e saídas (planilhas, cadernos, vários apps) e **pouca clareza**, no dia a dia, sobre para onde o dinheiro está indo. Sem uma visão confiável e atualizada do mês — receitas, despesas e saldo — fica difícil decidir com segurança o que pode gastar, o que deve cortar e quanto dá para poupar. O esforço manual e soluções genéricas pouco integradas aumentam o abandono do hábito de controle e reforçam a sensação de “não saber por onde começar”.
 
 ## 2. Público-Alvo/Persona
 
-**Persona principal — “Ana, estudante universitária”**  
-- Idade aproximada: 19–28 anos; cursa graduação ou pós na PUC Minas.  
-- Usa smartphone diariamente; tolerância baixa a ferramentas complexas ou que exijam muito tempo de configuração.  
-- Renda mista: bolsa, apoio familiar, estágio ou freelas; gastos variam com o mês (provas, períodos de estágio, recesso).  
-- Objetivos: não atrasar contas, saber quanto pode gastar na semana, guardar para metas (curso, viagem, notebook) e reduzir ansiedade com dinheiro.
+**Público:** adultos e jovens adultos em busca de **mais controle sobre gastos** e de **capacidade de economizar** de forma consistente, com renda e rotinas diferentes.
 
-**Personas secundárias (futuro):** coordenação ou projetos institucionais que queiram oferecer conteúdo educativo financeiro no contexto acadêmico (sem substituir a persona principal na v1).
+**Persona principal — “controle no bolso”**  
+- **Perfis:** trabalhadores em regime CLT, autônomos ou freelancers com fluxo de caixa variável, e estudantes que conciliam renda irregular (bolsa, estágio, apoio familiar) com despesas recorrentes.  
+- **Comportamento:** usa smartphone no dia a dia; prefere fluxos curtos a configurar “sistemas” complexos.  
+- **Necessidades:** registrar receitas e despesas com pouco atrito; ver **onde o dinheiro vai** (categorias, período); ter uma **foto do mês** (quanto entrou, quanto saiu, quanto sobrou ou faltou).  
+- **Frustrações com o estado atual:** planilhas que exigem disciplina constante, anotações desorganizadas e apps genéricos que não conversam entre si ou não traduzem dados em decisão simples (“o que muda no meu mês?”).
 
 ## 3. Objetivo
 
-Oferecer um produto digital (prioritariamente web responsiva, evoluindo para app se fizer sentido) que permita **cadastrar receitas e despesas**, **categorizar gastos**, **visualizar resumo por período** e **definir metas simples**, com foco em clareza, rapidez de uso e privacidade dos dados do usuário, alinhado ao contexto de vida acadêmica na PUC Minas.
+Entregar um produto de software que **centralize** o registro de receitas e despesas, **dê visibilidade** clara dos gastos por categoria e período e **apoie o controle financeiro mensal**, reduzindo dependência de métodos manuais dispersos. O resultado esperado para o usuário é **menos improviso**, **mais previsibilidade** no orçamento do mês e **base objetiva** para poupar, quitar dívidas ou investir — sem substituir planejamento financeiro profissional, mas tornando o acompanhamento cotidiano **simples, contínuo e acionável**.

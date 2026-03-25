@@ -5,10 +5,10 @@ Cole o bloco abaixo na ferramenta de prototipagem. Ajuste o nome do produto se d
 ---
 
 **Papel:** Designer de UX sênior.  
-**Tarefa:** Gerar um conjunto de telas web **responsivas** (mobile-first) para o produto **Finanças PUC Minas** — aplicativo de controle financeiro pessoal para estudantes universitários.
+**Tarefa:** Gerar um conjunto de telas web **responsivas** (mobile-first) para um aplicativo de **controle financeiro pessoal** — público: quem quer organizar gastos e poupar (CLT, autônomos, estudantes e perfis mistos).
 
 **Contexto do produto:**  
-Web app para cadastro/login, registro rápido de receitas e despesas com categorias (Alimentação, Transporte, Estudos, Moradia, Lazer, Saúde, Outros), lista filtrada por mês, dashboard com totais e gráfico por categoria, metas simples com barra de progresso, gestão de categorias e página de perfil. Tom: confiável, calmo, moderno; **tema escuro** com acentos azul; tipografia DM Sans + Source Sans 3; botões com altura confortável para toque.
+Web app para cadastro/login, registro rápido de receitas e despesas com categorias iniciais sugeridas (Alimentação, Transporte, Moradia, Saúde, Lazer, Estudos e trabalho, Outros), lista filtrada por mês, dashboard com totais e gráfico por categoria, metas simples com barra de progresso, gestão de categorias e página de perfil. Tom: confiável, calmo, moderno; **tema escuro** com acentos azul; tipografia DM Sans + Source Sans 3; botões com altura confortável para toque.
 
 **Telas obrigatórias (alta fidelidade, mesmo sistema visual):**
 

@@ -4,7 +4,7 @@
 
 - **Clareza antes de densidade:** poucos números por tela; hierarquia forte.
 - **Calma:** evitar alarmismo em vermelho para “despesa”; usar cor semântica com moderação.
-- **Acadêmico sem ser infantil:** moderno, limpo, confiável.
+- **Confiável e acessível:** moderno, limpo, sem tom infantil nem corporativo excessivo.
 
 ## Paleta (CSS variables sugeridas)
 
@@ -21,7 +21,7 @@
 | `--color-expense` | Despesa (detalhe) | `#ff8a65` |
 | `--color-danger` | Excluir / erro crítico | `#ef5350` |
 
-*Tema escuro como padrão reduz fadiga em uso noturno (comum em estudantes). Oferecer tema claro na v1.1 se desejado.*
+*Tema escuro como padrão reduz fadiga em uso noturno (comum em consultas rápidas ao fim do dia). Oferecer tema claro na v1.1 se desejado.*
 
 ## Tipografia
 
