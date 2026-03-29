@@ -61,45 +61,20 @@ jobs:
       # ==========================================
       # DEPLOY: BACKEND
       # ==========================================
-      # O Vercel puxa a configuração remota (`vercel pull`) baseada no VERCEL_PROJECT_ID_BACKEND
-      - name: Pull Vercel Environment (Backend)
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel Cloud (Backend)
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
-        working-directory: ./apps/backend
-
-      - name: Build Project (Backend)
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
-        working-directory: ./apps/backend
-
-      - name: Deploy to Vercel (Backend)
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
-        working-directory: ./apps/backend
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
 
       # ==========================================
       # DEPLOY: FRONTEND
       # ==========================================
-      - name: Pull Vercel Environment (Frontend)
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel Cloud (Frontend)
+        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-        working-directory: ./apps/frontend
-
-      - name: Build Project (Frontend)
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-        working-directory: ./apps/frontend
-
-      - name: Deploy to Vercel (Frontend)
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-        working-directory: ./apps/frontend
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
 
       # (Opcional) Passo comentado com a Notificação de Status
       # - name: Send Notification
