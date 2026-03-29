@@ -1,0 +1,97 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main # Aciona o workflow apenas em push na branch main
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+jobs:
+  lint-and-test:
+    name: Code Quality (Lint & Test)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # LTS especificada no spec_tech.md
+          cache: 'npm'       # Cache automático das dependências do NPM
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Linter
+        run: npm run lint --if-present
+
+      - name: Run Tests
+        run: npm run test --if-present
+        # O pipeline irá falhar automaticamente se o linter ou os testes falharem (exit code != 0)
+
+  deploy:
+    name: Deploy to Vercel (Production)
+    needs: lint-and-test # Somente executa se o job de lint-and-test não apresentar erros
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # ==========================================
+      # DEPLOY: BACKEND
+      # ==========================================
+      # O Vercel puxa a configuração remota (`vercel pull`) baseada no VERCEL_PROJECT_ID
+      - name: Pull Vercel Environment (Backend)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          # Assumindo que a VERCEL_PROJECT_ID foi dividida em duas keys para o monorepo
+          # (backend e frontend). Fallback caso tenha a key genérica no GitHub Actions.
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND || secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./apps/backend
+
+      - name: Build Project (Backend)
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND || secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./apps/backend
+
+      - name: Deploy to Vercel (Backend)
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND || secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./apps/backend
+
+      # ==========================================
+      # DEPLOY: FRONTEND
+      # ==========================================
+      - name: Pull Vercel Environment (Frontend)
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND || secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./apps/frontend
+
+      - name: Build Project (Frontend)
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND || secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./apps/frontend
+
+      - name: Deploy to Vercel (Frontend)
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND || secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./apps/frontend
+
+      # (Opcional) Passo comentado com a Notificação de Status
+      # - name: Send Notification
+      #   uses: rtCamp/action-slack-notify@v2
+      #   env:
+      #     SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      #     SLACK_MESSAGE: "Deploy executado com sucesso: ${{ github.repository }}"
