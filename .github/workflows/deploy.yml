@@ -8,10 +8,24 @@ on:
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
+  validate-secrets:
+    name: Validate GitHub Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if secrets are configured
+        run: |
+          if [ -z "${{ secrets.VERCEL_ORG_ID }}" ]; then echo "❌ Missing VERCEL_ORG_ID secret"; exit 1; fi
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then echo "❌ Missing VERCEL_TOKEN secret"; exit 1; fi
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID_BACKEND }}" ]; then echo "❌ Missing VERCEL_PROJECT_ID_BACKEND secret. Did you add it to GitHub Repo Settings?"; exit 1; fi
+          if [ -z "${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}" ]; then echo "❌ Missing VERCEL_PROJECT_ID_FRONTEND secret. Did you add it to GitHub Repo Settings?"; exit 1; fi
+          echo "✅ All Vercel secrets are properly configured!"
+
   lint-and-test:
     name: Code Quality (Lint & Test)
+    needs: validate-secrets
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
