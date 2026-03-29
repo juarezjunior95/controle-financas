@@ -47,25 +47,23 @@ jobs:
       # ==========================================
       # DEPLOY: BACKEND
       # ==========================================
-      # O Vercel puxa a configuração remota (`vercel pull`) baseada no VERCEL_PROJECT_ID
+      # O Vercel puxa a configuração remota (`vercel pull`) baseada no VERCEL_PROJECT_ID_BACKEND
       - name: Pull Vercel Environment (Backend)
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          # Assumindo que a VERCEL_PROJECT_ID foi dividida em duas keys para o monorepo
-          # (backend e frontend). Fallback caso tenha a key genérica no GitHub Actions.
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND || secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
         working-directory: ./apps/backend
 
       - name: Build Project (Backend)
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND || secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
         working-directory: ./apps/backend
 
       - name: Deploy to Vercel (Backend)
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND || secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
         working-directory: ./apps/backend
 
       # ==========================================
@@ -74,19 +72,19 @@ jobs:
       - name: Pull Vercel Environment (Frontend)
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND || secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
         working-directory: ./apps/frontend
 
       - name: Build Project (Frontend)
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND || secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
         working-directory: ./apps/frontend
 
       - name: Deploy to Vercel (Frontend)
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
         env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND || secrets.VERCEL_PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
         working-directory: ./apps/frontend
 
       # (Opcional) Passo comentado com a Notificação de Status
