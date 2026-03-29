@@ -66,6 +66,7 @@ jobs:
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        working-directory: ./apps/backend
 
       # ==========================================
       # DEPLOY: FRONTEND
@@ -75,6 +76,7 @@ jobs:
         env:
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+        working-directory: ./apps/frontend
 
       # (Opcional) Passo comentado com a Notificação de Status
       # - name: Send Notification

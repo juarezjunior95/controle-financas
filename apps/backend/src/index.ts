@@ -17,6 +17,10 @@ apiRouter.get('/health', HealthController.check);
 // Mount API version
 app.use('/api/v1', apiRouter);
 
-app.listen(port, () => {
-  console.log(`[Backend] Server is running on port ${port}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(port, () => {
+    console.log(`[Backend] Server is running on port ${port}`);
+  });
+}
+
+export default app;
