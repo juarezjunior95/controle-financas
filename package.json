@@ -1,0 +1,13 @@
+{
+  "name": "controle-financas",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "docker-compose up -d",
+    "stop": "docker-compose down",
+    "build:all": "npm run build --workspaces"
+  }
+}

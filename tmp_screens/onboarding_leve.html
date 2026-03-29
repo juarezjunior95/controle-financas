@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&amp;family=Source+Sans+3:ital,wght@0,200..900;1,200..900&amp;family=Manrope:wght@200..800&amp;family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "#324575",
+              "on-primary-container": "#cbd8ff",
+              "secondary-fixed": "#dae2ff",
+              "on-secondary": "#1a2e5d",
+              "on-tertiary-container": "#ffcebd",
+              "secondary": "#b3c5fd",
+              "on-surface-variant": "#c3c6d6",
+              "surface-container-highest": "#353534",
+              "surface-container-low": "#1c1b1b",
+              "on-primary-fixed": "#001945",
+              "on-primary": "#002d6e",
+              "on-secondary-fixed-variant": "#324575",
+              "on-secondary-fixed": "#001847",
+              "primary-fixed": "#d9e2ff",
+              "on-surface": "#e5e2e1",
+              "surface-tint": "#b0c6ff",
+              "inverse-primary": "#0058ca",
+              "surface-container-high": "#2a2a2a",
+              "error": "#ffb4ab",
+              "primary-container": "#0058cb",
+              "on-secondary-container": "#a1b4eb",
+              "outline": "#8d90a0",
+              "on-tertiary-fixed-variant": "#812800",
+              "on-primary-fixed-variant": "#00429b",
+              "surface": "#131313",
+              "inverse-surface": "#e5e2e1",
+              "tertiary-fixed-dim": "#ffb59b",
+              "tertiary": "#ffb59b",
+              "inverse-on-surface": "#313030",
+              "surface-container": "#201f1f",
+              "surface-container-lowest": "#0e0e0e",
+              "on-tertiary": "#5c1a00",
+              "tertiary-fixed": "#ffdbcf",
+              "primary-fixed-dim": "#b0c6ff",
+              "surface-bright": "#393939",
+              "on-tertiary-fixed": "#380d00",
+              "on-background": "#e5e2e1",
+              "error-container": "#93000a",
+              "on-error-container": "#ffdad6",
+              "secondary-fixed-dim": "#b3c5fd",
+              "surface-variant": "#353534",
+              "primary": "#b0c6ff",
+              "background": "#131313",
+              "outline-variant": "#424654",
+              "on-error": "#690005",
+              "surface-dim": "#131313",
+              "tertiary-container": "#a93802"
+            },
+            fontFamily: {
+              "headline": ["DM Sans", "Manrope", "sans-serif"],
+              "body": ["Source Sans 3", "Inter", "sans-serif"],
+              "label": ["Source Sans 3", "Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-effect {
+        background: rgba(57, 57, 57, 0.6);
+        backdrop-filter: blur(20px);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary/30 antialiased overflow-x-hidden">
+<!-- Onboarding suppression logic: No TopNavBar, SideNavBar or BottomNavBar for transactional flow -->
+<main class="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative">
+<!-- Ambient Atmospheric Background Elements -->
+<div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-tertiary/5 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="w-full max-w-[1100px] grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<!-- Left Content: Editorial Messaging -->
+<div class="lg:col-span-6 space-y-10">
+<div class="inline-flex items-center space-x-3 px-4 py-2 bg-surface-container-high rounded-full">
+<span class="material-symbols-outlined text-primary text-sm" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span class="text-xs font-bold uppercase tracking-widest text-primary">Acesso Seguro • Vault v2.0</span>
+</div>
+<div class="space-y-6">
+<h1 class="text-5xl md:text-7xl font-headline font-bold tracking-tighter leading-[0.95] text-on-surface">
+                        Seu patrimônio, <br/>
+<span class="text-primary italic">redefinido.</span>
+</h1>
+<p class="text-lg md:text-xl text-on-surface-variant max-w-md font-body leading-relaxed">
+                        Bem-vindo ao Vault. Projetamos um ambiente silencioso para você gerenciar sua liberdade financeira com a precisão de uma curadoria editorial.
+                    </p>
+</div>
+<!-- Guided CTA Section -->
+<div class="pt-6">
+<button class="group relative flex items-center justify-center px-8 py-5 bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold text-lg rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/20">
+<span class="relative z-10 flex items-center gap-3">
+                            Realizar seu primeiro lançamento
+                            <span class="material-symbols-outlined transition-transform group-hover:translate-x-1" data-icon="arrow_forward">arrow_forward</span>
+</span>
+</button>
+<p class="mt-4 text-sm text-on-surface-variant/60 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="bolt">bolt</span>
+                        Leva menos de 30 segundos para começar.
+                    </p>
+</div>
+</div>
+<!-- Right Content: Bento Visual Representation -->
+<div class="lg:col-span-6 relative">
+<div class="grid grid-cols-2 gap-4">
+<!-- Glass Card 1: Balance Preview -->
+<div class="col-span-2 glass-effect rounded-xl p-8 border border-outline-variant/10 shadow-2xl">
+<div class="flex justify-between items-start mb-12">
+<div class="w-12 h-12 bg-surface-container-highest rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance_wallet" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div class="text-right">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Patrimônio Total</p>
+<p class="text-2xl font-headline font-bold text-on-surface">R$ 0,00</p>
+</div>
+</div>
+<div class="h-[120px] w-full flex items-end justify-between gap-2 overflow-hidden">
+<div class="flex-1 bg-surface-container-highest h-[20%] rounded-t-lg"></div>
+<div class="flex-1 bg-surface-container-highest h-[35%] rounded-t-lg"></div>
+<div class="flex-1 bg-surface-container-highest h-[15%] rounded-t-lg"></div>
+<div class="flex-1 bg-primary/20 h-[45%] rounded-t-lg"></div>
+<div class="flex-1 bg-surface-container-highest h-[25%] rounded-t-lg"></div>
+<div class="flex-1 bg-surface-container-highest h-[60%] rounded-t-lg"></div>
+<div class="flex-1 bg-primary/40 h-[30%] rounded-t-lg border-t-2 border-primary"></div>
+</div>
+</div>
+<!-- Glass Card 2: Goal Progress -->
+<div class="bg-surface-container-low rounded-xl p-6 border border-outline-variant/5">
+<span class="material-symbols-outlined text-tertiary mb-4" data-icon="stars" style="font-variation-settings: 'FILL' 1;">stars</span>
+<h3 class="text-sm font-bold text-on-surface mb-1">Metas Ativas</h3>
+<p class="text-xs text-on-surface-variant mb-4">Aguardando seu primeiro registro.</p>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-[0%] h-full bg-tertiary"></div>
+</div>
+</div>
+<!-- Glass Card 3: Insights -->
+<div class="bg-surface-container-highest rounded-xl p-6 flex flex-col justify-between">
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-primary-container flex items-center justify-center text-[10px] font-bold">V</div>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-secondary-container flex items-center justify-center text-[10px] font-bold">A</div>
+</div>
+<div>
+<p class="text-[10px] uppercase tracking-tighter font-bold text-primary">Insights do Vault</p>
+<p class="text-sm leading-tight text-on-surface mt-1">Descubra padrões ocultos nos seus gastos.</p>
+</div>
+</div>
+</div>
+<!-- Abstract Decorative Image -->
+<div class="absolute -z-10 -top-10 -right-10 w-full h-full bg-cover bg-center rounded-xl opacity-20 blur-sm grayscale" data-alt="Modern abstract 3D render of architectural flowing shapes in dark grey and blue tones, atmospheric lighting and deep shadows" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCdTc7sga3mmBOdqiJFEG_BJzBJ26lqt2HKnsCC3FgYCvap2ej9pHQQQaht_sjYNgwd4BzZPaYPU7ok9wHIB7C3t4QrDCtl4HiXqeV6fl4GOs-PsrZoSKpltLyyUlwmAvqjAgjJuUfLJw9leJpTXsHo6mQ3Vz1nI-J8kXG6YaCbUdafR4kILyQTx7SkhPmLEmOxux9pjcIblR-KzokT2cK-kQTt1nY8Nm9mZgovAj_zbn1YzSFrtRSweQil8AKyV-NCnixSI0-JZIU')">
+</div>
+</div>
+</div>
+<!-- Footer Value Props -->
+<footer class="mt-24 grid grid-cols-1 md:grid-cols-3 gap-12 w-full max-w-[1100px] border-t border-outline-variant/10 pt-12">
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-10 h-10 bg-surface-container-low rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="analytics">analytics</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Dados Precisos</h4>
+<p class="text-sm text-on-surface-variant mt-1">Visualizações de dados de nível institucional para decisões assertivas.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-10 h-10 bg-surface-container-low rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="visibility_off">visibility_off</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Privacidade Radical</h4>
+<p class="text-sm text-on-surface-variant mt-1">Seus dados financeiros nunca saem do seu controle. Criptografia total.</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex-shrink-0 w-10 h-10 bg-surface-container-low rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Design Calmo</h4>
+<p class="text-sm text-on-surface-variant mt-1">Sem notificações intrusivas ou ruído visual. Apenas o essencial.</p>
+</div>
+</div>
+</footer>
+<!-- Bottom Action for Mobile (Hidden on Web) -->
+<div class="md:hidden mt-12 w-full">
+<button class="w-full py-4 text-on-surface-variant text-sm font-medium border border-outline-variant/20 rounded-full hover:bg-surface-container-highest transition-all">
+                Pular para o Dashboard
+            </button>
+</div>
+</main>
+</body></html>

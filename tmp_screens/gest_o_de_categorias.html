@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vault - Gerenciar Categorias</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&amp;family=Source+Sans+3:wght@300;400;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-container": "#324575",
+              "on-primary-container": "#cbd8ff",
+              "secondary-fixed": "#dae2ff",
+              "on-secondary": "#1a2e5d",
+              "on-tertiary-container": "#ffcebd",
+              "secondary": "#b3c5fd",
+              "on-surface-variant": "#c3c6d6",
+              "surface-container-highest": "#353534",
+              "surface-container-low": "#1c1b1b",
+              "on-primary-fixed": "#001945",
+              "on-primary": "#002d6e",
+              "on-secondary-fixed-variant": "#324575",
+              "on-secondary-fixed": "#001847",
+              "primary-fixed": "#d9e2ff",
+              "on-surface": "#e5e2e1",
+              "surface-tint": "#b0c6ff",
+              "inverse-primary": "#0058ca",
+              "surface-container-high": "#2a2a2a",
+              "error": "#ffb4ab",
+              "primary-container": "#0058cb",
+              "on-secondary-container": "#a1b4eb",
+              "outline": "#8d90a0",
+              "on-tertiary-fixed-variant": "#812800",
+              "on-primary-fixed-variant": "#00429b",
+              "surface": "#131313",
+              "inverse-surface": "#e5e2e1",
+              "tertiary-fixed-dim": "#ffb59b",
+              "tertiary": "#ffb59b",
+              "inverse-on-surface": "#313030",
+              "surface-container": "#201f1f",
+              "surface-container-lowest": "#0e0e0e",
+              "on-tertiary": "#5c1a00",
+              "tertiary-fixed": "#ffdbcf",
+              "primary-fixed-dim": "#b0c6ff",
+              "surface-bright": "#393939",
+              "on-tertiary-fixed": "#380d00",
+              "on-background": "#e5e2e1",
+              "error-container": "#93000a",
+              "on-error-container": "#ffdad6",
+              "secondary-fixed-dim": "#b3c5fd",
+              "surface-variant": "#353534",
+              "primary": "#b0c6ff",
+              "background": "#131313",
+              "outline-variant": "#424654",
+              "on-error": "#690005",
+              "surface-dim": "#131313",
+              "tertiary-container": "#a93802"
+            },
+            fontFamily: {
+              "dm-sans": ["DM Sans", "sans-serif"],
+              "source-sans-3": ["Source Sans 3", "sans-serif"],
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        background-color: #131313;
+        color: #e5e2e1;
+        font-family: 'Source Sans 3', sans-serif;
+      }
+      .glass-card {
+        background: rgba(53, 53, 52, 0.4);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased">
+<!-- Desktop Side Navigation -->
+<aside class="h-screen w-64 fixed left-0 top-0 hidden md:flex flex-col bg-[#1c1b1b] shadow-[24px_0_48px_rgba(0,0,0,0.4)] py-8 space-y-2 z-50">
+<div class="px-6 mb-8">
+<h1 class="text-[#e5e2e1] text-xl font-black tracking-tighter">The Vault</h1>
+<p class="text-on-surface-variant text-xs font-source-sans-3">Premium Tier</p>
+</div>
+<nav class="flex-1 flex flex-col space-y-1">
+<a class="text-[#c3c6d6] py-3 pl-6 hover:bg-[#353534]/50 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-source-sans-3 text-sm">Dashboard</span>
+</a>
+<a class="text-[#c3c6d6] py-3 pl-6 hover:bg-[#353534]/50 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-source-sans-3 text-sm">Transactions</span>
+</a>
+<a class="bg-[#353534] text-[#b0c6ff] rounded-r-full mr-4 py-3 pl-6 border-l-4 border-[#b0c6ff] transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="pie_chart">pie_chart</span>
+<span class="font-source-sans-3 text-sm">Budgets</span>
+</a>
+<a class="text-[#c3c6d6] py-3 pl-6 hover:bg-[#353534]/50 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="flag">flag</span>
+<span class="font-source-sans-3 text-sm">Goals</span>
+</a>
+<a class="text-[#c3c6d6] py-3 pl-6 hover:bg-[#353534]/50 transition-all flex items-center gap-3" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-source-sans-3 text-sm">Reports</span>
+</a>
+</nav>
+<div class="mt-auto px-6 space-y-4">
+<button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-bold py-3 px-4 rounded-full flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+<span class="font-source-sans-3 text-sm">Novo Lançamento</span>
+</button>
+<div class="pt-4 border-t border-outline-variant/20 flex flex-col space-y-2">
+<a class="text-[#c3c6d6] text-sm flex items-center gap-3 py-2 hover:text-on-surface" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="help">help</span>
+<span>Help</span>
+</a>
+<a class="text-[#c3c6d6] text-sm flex items-center gap-3 py-2 hover:text-on-surface" href="#">
+<span class="material-symbols-outlined text-xl" data-icon="logout">logout</span>
+<span>Sign Out</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 min-h-screen pb-24 md:pb-8">
+<!-- Top App Bar (Mobile & Desktop Header) -->
+<header class="bg-[#131313] sticky top-0 z-40 w-full px-6 py-4 flex justify-between items-center bg-gradient-to-b from-[#1c1b1b] to-transparent">
+<div class="flex items-center gap-4">
+<h2 class="text-2xl font-bold font-dm-sans tracking-tight text-[#b0c6ff]">Categorias</h2>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 text-[#c3c6d6] hover:text-[#e5e2e1] transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="User profile" data-alt="portrait of a professional man in a dark suit with soft studio lighting and a clean dark grey background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdtqx7V0Cp-ldE-duX_AqPxFk4KcGE8raE5qTkPJIDoeme_fhDXy51GqtILrn-BPyyrxhW9cI3_bj7JfSnRLLwtAur-7ezMHAtLVlP99jx0-CT_2fy4LgtXOPAkTjG3p64VPskAxaOkiaF1EV7dwKymRF7vgcUQsghmuN9T5qGP_hkxZi2WD-TjBpVfMAWrq3GhmM_HrVPF3UELw45LLcubhrIaafmrZibAcCL1X-ONxiJN67UIZ9XoeFmndZmSda-w7oX5DQgONQ"/>
+</div>
+</div>
+</header>
+<!-- Category Content -->
+<div class="px-6 mt-4 max-w-4xl mx-auto">
+<!-- Category Management Action -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+<div>
+<p class="text-on-surface-variant font-source-sans-3 max-w-md">Organize seus gastos e receitas. Gerencie suas categorias para ter uma visão clara do seu fluxo financeiro.</p>
+</div>
+<button class="bg-primary-container text-on-primary-container px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-95 transition-all shadow-lg">
+<span class="material-symbols-outlined" data-icon="add_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span>Adicionar Categoria</span>
+</button>
+</div>
+<!-- Categories Grid (Asymmetric Bento Style) -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+<!-- Alimentação - Hero Card -->
+<div class="md:col-span-8 bg-surface-container-high rounded-2xl p-6 flex items-center justify-between group hover:bg-surface-container-highest transition-colors cursor-pointer relative overflow-hidden">
+<div class="flex items-center gap-5 z-10">
+<div class="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-4xl" data-icon="restaurant">restaurant</span>
+</div>
+<div>
+<h3 class="font-dm-sans text-xl font-bold">Alimentação</h3>
+<p class="text-sm text-on-surface-variant">32 Transações este mês</p>
+</div>
+</div>
+<div class="flex flex-col items-end z-10">
+<span class="text-primary font-bold text-lg">R$ 1.240,00</span>
+<span class="text-xs text-on-surface-variant uppercase tracking-widest font-bold">Essencial</span>
+</div>
+<!-- Background Accent -->
+<div class="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[120px]" data-icon="restaurant">restaurant</span>
+</div>
+</div>
+<!-- Transporte -->
+<div class="md:col-span-4 bg-surface-container-high rounded-2xl p-6 flex flex-col justify-between group hover:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-12 h-12 rounded-xl bg-secondary-container/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-2xl" data-icon="directions_car">directions_car</span>
+</div>
+<div class="mt-8">
+<h3 class="font-dm-sans text-lg font-bold">Transporte</h3>
+<p class="text-primary text-sm font-semibold mt-1">R$ 450,00</p>
+</div>
+</div>
+<!-- Moradia -->
+<div class="md:col-span-4 bg-surface-container-high rounded-2xl p-6 flex flex-col justify-between group hover:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-12 h-12 rounded-xl bg-tertiary-container/40 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-2xl" data-icon="home">home</span>
+</div>
+<div class="mt-8">
+<h3 class="font-dm-sans text-lg font-bold">Moradia</h3>
+<p class="text-primary text-sm font-semibold mt-1">R$ 2.800,00</p>
+</div>
+</div>
+<!-- Saúde -->
+<div class="md:col-span-4 bg-surface-container-high rounded-2xl p-6 flex flex-col justify-between group hover:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-12 h-12 rounded-xl bg-error-container/40 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-2xl" data-icon="medical_services">medical_services</span>
+</div>
+<div class="mt-8">
+<h3 class="font-dm-sans text-lg font-bold">Saúde</h3>
+<p class="text-primary text-sm font-semibold mt-1">R$ 210,00</p>
+</div>
+</div>
+<!-- Lazer -->
+<div class="md:col-span-4 bg-surface-container-high rounded-2xl p-6 flex flex-col justify-between group hover:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-12 h-12 rounded-xl bg-primary-container/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl" data-icon="sports_esports">sports_esports</span>
+</div>
+<div class="mt-8">
+<h3 class="font-dm-sans text-lg font-bold">Lazer</h3>
+<p class="text-primary text-sm font-semibold mt-1">R$ 680,00</p>
+</div>
+</div>
+<!-- Estudos e trabalho -->
+<div class="md:col-span-6 bg-surface-container-high rounded-2xl p-6 flex items-center gap-6 group hover:bg-surface-container-highest transition-colors cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface border border-outline-variant/20">
+<span class="material-symbols-outlined text-2xl" data-icon="school">school</span>
+</div>
+<div class="flex-1">
+<h3 class="font-dm-sans text-lg font-bold">Estudos e trabalho</h3>
+<div class="h-1.5 w-full bg-surface-container rounded-full mt-2 overflow-hidden">
+<div class="h-full bg-primary w-[65%] rounded-full"></div>
+</div>
+</div>
+<div class="text-right">
+<p class="text-primary font-bold">R$ 950,00</p>
+</div>
+</div>
+<!-- Outros -->
+<div class="md:col-span-6 bg-surface-container-low border border-outline-variant/10 rounded-2xl p-6 flex items-center gap-6 group hover:bg-surface-container-high transition-colors cursor-pointer">
+<div class="w-14 h-14 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-2xl" data-icon="more_horiz">more_horiz</span>
+</div>
+<div class="flex-1">
+<h3 class="font-dm-sans text-lg font-bold">Outros</h3>
+<p class="text-xs text-on-surface-variant">Despesas não categorizadas</p>
+</div>
+<div class="text-right">
+<p class="text-on-surface-variant font-bold">R$ 120,50</p>
+</div>
+</div>
+</div>
+<!-- Pro-tip/Visual Aid -->
+<div class="mt-12 p-8 rounded-2xl bg-gradient-to-r from-secondary-container/20 to-transparent border-l-4 border-secondary">
+<div class="flex items-start gap-4">
+<span class="material-symbols-outlined text-secondary" data-icon="lightbulb">lightbulb</span>
+<div>
+<h4 class="font-bold text-secondary mb-1">Dica do Vault</h4>
+<p class="text-on-surface-variant text-sm leading-relaxed">Categorias com cores personalizadas ajudam você a identificar padrões de gastos instantaneamente no seu Dashboard. Tente separar 'Essenciais' de 'Estilo de Vida' usando tons diferentes.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile only) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pt-3 pb-6 bg-[#1c1b1b]/90 backdrop-blur-xl border-t border-[#424654]/20 z-50 md:hidden rounded-t-[1.5rem] shadow-[0_-8px_24px_rgba(0,0,0,0.3)]">
+<a class="flex flex-col items-center justify-center text-[#c3c6d6] opacity-60" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-source-sans-3 text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c3c6d6] opacity-60" href="#">
+<span class="material-symbols-outlined" data-icon="list_alt">list_alt</span>
+<span class="font-source-sans-3 text-[10px] font-medium">Activity</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#b0c6ff] active:scale-110 transition-transform duration-300 ease-out" href="#">
+<span class="material-symbols-outlined text-4xl" data-icon="add_circle">add_circle</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#b0c6ff]/10 text-[#b0c6ff] rounded-2xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="stars" data-weight="fill" style="font-variation-settings: 'FILL' 1;">stars</span>
+<span class="font-source-sans-3 text-[10px] font-medium">Goals</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#c3c6d6] opacity-60" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-source-sans-3 text-[10px] font-medium">Profile</span>
+</a>
+</nav>
+</body></html>

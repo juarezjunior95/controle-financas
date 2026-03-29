@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background-color: #131313;
+  --text-color: #e5e2e1;
+}
+
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer utilities {
+  /* Utility class for primary CTA gradient mentioned in design specs */
+  .bg-gradient-action {
+    background: linear-gradient(135deg, #b0c6ff, #0058cb);
+  }
+}
