@@ -12,7 +12,11 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
-    "check-db": "npx tsx check-pg.ts"
+    "check-db": "npx tsx check-pg.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --reporters=default --reporters=jest-junit"
   },
   "dependencies": {
     "@clerk/express": "^2.0.7",
@@ -27,8 +31,11 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.11.24",
-    "@types/pg": "^8.11.0",
+    "@types/pg": "^8.20.0",
+    "jest": "^30.3.0",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }
