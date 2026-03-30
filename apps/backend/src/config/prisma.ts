@@ -9,6 +9,7 @@ const globalForPrisma = globalThis as unknown as {
 // Configuração do pool de conexões nativo para o driver pg
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
 });
 
 // Inicialização do adaptador Prisma PostgreSQL
