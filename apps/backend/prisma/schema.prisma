@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  clerkId       String   @unique @map("clerk_id")
+  email         String   @unique
+  displayName   String?  @map("display_name")
+  avatarUrl     String?  @map("avatar_url")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  categories    Category[]
+  transactions  Transaction[]
+  goals         Goal[]
+
+  @@map("users")
+}
+
+model Category {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  name       String
+  isSystem   Boolean  @default(false) @map("is_system")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([userId, name])
+  @@map("categories")
+}
+
+model Transaction {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  categoryId   String   @map("category_id") @db.Uuid
+  type         String   // "income" | "expense"
+  amount       Decimal  @db.Decimal(15, 2)
+  occurredOn   DateTime @map("occurred_on") @db.Date
+  description  String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@index([userId, occurredOn])
+  @@map("transactions")
+}
+
+model Goal {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  name          String
+  targetAmount  Decimal   @map("target_amount") @db.Decimal(15, 2)
+  currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(15, 2)
+  dueDate       DateTime? @map("due_date") @db.Date
+  status        String    @default("active") // "active" | "completed" | "archived"
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("goals")
+}

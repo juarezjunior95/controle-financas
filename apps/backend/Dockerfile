@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY apps/backend/package*.json ./apps/backend/
 COPY apps/frontend/package*.json ./apps/frontend/
+COPY apps/backend/prisma ./apps/backend/prisma
 
 RUN npm install
 
