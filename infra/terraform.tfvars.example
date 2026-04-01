@@ -1,0 +1,21 @@
+# =============================================================================
+# EXEMPLO DE VARIÁVEIS SENSÍVEIS DO TERRAFORM
+# =============================================================================
+#
+# Copie este arquivo para terraform.tfvars e preencha com seus valores.
+# O arquivo terraform.tfvars NÃO deve ser commitado no Git!
+#
+# =============================================================================
+
+# Vercel
+vercel_api_token = "seu-token-vercel-aqui"
+vercel_team_id   = null # ou "team_xxxx" se usar time
+
+# Supabase
+supabase_access_token = "sbp_xxxxxxxxxxxx"
+supabase_anon_key     = "eyJxxxxxxxxxxxx"
+database_url          = "postgresql://postgres:SENHA@db.xxxxxx.supabase.co:5432/postgres"
+
+# Clerk (opcional - preencher quando configurar autenticação)
+clerk_publishable_key = "pk_test_xxxxxxxxxxxx"
+clerk_secret_key      = "sk_test_xxxxxxxxxxxx"
