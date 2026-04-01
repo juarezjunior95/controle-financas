@@ -8,14 +8,15 @@ variable "project_name" {
 }
 
 variable "framework" {
-  description = "Framework do projeto (nextjs, other, etc.)"
+  description = "Framework do projeto (nextjs, express, etc.)"
   type        = string
   default     = "nextjs"
 
   validation {
     condition = contains([
       "nextjs", "gatsby", "remix", "astro", "nuxtjs", "vite",
-      "create-react-app", "angular", "svelte", "other"
+      "create-react-app", "angular", "svelte", "express", "fastify",
+      "nestjs", "koa", "hono", "flask", "django", "fastapi"
     ], var.framework)
     error_message = "Framework inválido."
   }

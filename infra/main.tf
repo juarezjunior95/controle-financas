@@ -36,7 +36,7 @@ module "vercel_backend" {
   source = "./modules/vercel"
 
   project_name    = "${var.project_name}-backend"
-  framework       = "other"
+  framework       = "express"
   root_directory  = "apps/backend"
   build_command   = "npm run build"
   output_directory = "dist"

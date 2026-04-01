@@ -171,37 +171,6 @@ terraform output github_secrets_summary
 Configure os secrets em:
 `https://github.com/juarezjunior95/controle-financas/settings/secrets/actions`
 
-## Troubleshooting
-
-### Erro de autenticação Vercel
-
-```
-Error: 401 Unauthorized
-```
-
-**Solução:** Verifique se o `vercel_api_token` está correto e não expirou.
-
-### Erro de conexão Supabase
-
-```
-Error: Can't reach database server
-```
-
-**Solução:** 
-1. Verifique se o projeto Supabase não está pausado
-2. Confirme a connection string no Dashboard do Supabase
-
-### State lock
-
-```
-Error: Error acquiring the state lock
-```
-
-**Solução:**
-```bash
-terraform force-unlock <LOCK_ID>
-```
-
 ## Boas Práticas
 
 1. **Nunca commitar** `terraform.tfvars` ou arquivos `.tfstate`
