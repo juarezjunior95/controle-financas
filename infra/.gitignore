@@ -1,0 +1,45 @@
+# =============================================================================
+# GITIGNORE - Terraform
+# =============================================================================
+
+# Arquivos de estado local
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+
+# Diretório de providers/módulos baixados
+.terraform/
+
+# Arquivos de variáveis sensíveis
+terraform.tfvars
+*.tfvars.local
+*.auto.tfvars
+
+# Arquivos de crash log
+crash.log
+crash.*.log
+
+# Arquivos de override (usados para testes locais)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Arquivos de plano
+*.tfplan
+plan.out
+
+# Arquivos de lock de CLI (pode ser commitado, mas opcional)
+# .terraform.lock.hcl
+
+# Arquivos de backup
+*.backup
+
+# Arquivos do editor
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
