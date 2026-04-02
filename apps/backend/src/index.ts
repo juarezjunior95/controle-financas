@@ -18,20 +18,24 @@ app.use(cors({
 
 app.use(express.json());
 
+// Variável para armazenar erro de inicialização
+let initError: Error | null = null;
+
 // ─── Health check (antes de qualquer middleware que possa falhar) ───────────
 app.get('/api/v1/health', (_req, res) => {
   res.status(200).json({
-    status: 'ok',
+    status: initError ? 'error' : 'ok',
     timestamp: new Date().toISOString(),
     service: 'controle-financas-backend',
     env: {
       database: !!process.env.DATABASE_URL,
       clerk: !!process.env.CLERK_SECRET_KEY,
     },
+    initError: initError ? initError.message : null,
   });
 });
 
-// ─── Importações condicionais para evitar crash ─────────────────────────────
+// ─── Importações e configuração de rotas ────────────────────────────────────
 try {
   const { clerkAuth, requireAuthentication } = require('./middleware/auth.middleware');
   const { AuthController } = require('./modules/auth/auth.controller');
@@ -55,7 +59,8 @@ try {
   app.use('/api/v1', apiRouter);
 
   console.log('[Backend] Rotas carregadas com sucesso.');
-} catch (error) {
+} catch (error: any) {
+  initError = error;
   console.error('[Backend] Erro ao carregar módulos:', error);
   
   // Rota de fallback para informar o erro
@@ -64,6 +69,8 @@ try {
       error: {
         code: 'SERVICE_UNAVAILABLE',
         message: 'Serviço temporariamente indisponível. Verifique as variáveis de ambiente.',
+        details: initError?.message,
+        stack: process.env.NODE_ENV !== 'production' ? initError?.stack : undefined,
       },
     });
   });
