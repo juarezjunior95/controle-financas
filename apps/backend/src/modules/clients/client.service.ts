@@ -8,6 +8,13 @@ interface SyncUserData {
   avatarUrl?: string | null;
 }
 
+function ensureClerkConfigured() {
+  if (!clerk) {
+    throw new Error('Serviço de autenticação não configurado. Verifique CLERK_SECRET_KEY.');
+  }
+  return clerk;
+}
+
 export class ClientService {
   /**
    * Sincroniza um usuário Clerk com a tabela de usuários local.
@@ -57,8 +64,9 @@ export class ClientService {
    * Busca o user completo no Clerk e faz upsert local.
    */
   static async syncFromClerk(clerkUserId: string) {
+    const clerkClient = ensureClerkConfigured();
     try {
-      const clerkUser = await clerk.users.getUser(clerkUserId);
+      const clerkUser = await clerkClient.users.getUser(clerkUserId);
 
       const primaryEmail = clerkUser.emailAddresses.find(
         (e) => e.id === clerkUser.primaryEmailAddressId

@@ -13,14 +13,22 @@ interface SignInInput {
   password: string;
 }
 
+function ensureClerkConfigured() {
+  if (!clerk) {
+    throw new Error('Serviço de autenticação não configurado. Verifique CLERK_SECRET_KEY.');
+  }
+  return clerk;
+}
+
 export class AuthService {
   /**
    * Registra um novo usuário no Clerk e sincroniza no banco local.
    */
   static async signUp(input: SignUpInput) {
+    const clerkClient = ensureClerkConfigured();
     try {
       // Criar usuário no Clerk
-      const clerkUser = await clerk.users.createUser({
+      const clerkUser = await clerkClient.users.createUser({
         emailAddress: [input.email],
         password: input.password,
         firstName: input.firstName,
@@ -37,7 +45,7 @@ export class AuthService {
       });
 
       // Gerar um signInToken para o frontend fazer a sessão
-      const signInToken = await clerk.signInTokens.createSignInToken({
+      const signInToken = await clerkClient.signInTokens.createSignInToken({
         userId: clerkUser.id,
         expiresInSeconds: 60 * 60 * 24, // 24 horas
       });
@@ -70,9 +78,10 @@ export class AuthService {
    * Após login bem-sucedido, sincroniza dados no banco local.
    */
   static async signIn(input: SignInInput) {
+    const clerkClient = ensureClerkConfigured();
     try {
       // Buscar o usuário pelo email no Clerk
-      const users = await clerk.users.getUserList({
+      const users = await clerkClient.users.getUserList({
         emailAddress: [input.email],
       });
 
@@ -83,7 +92,7 @@ export class AuthService {
       const clerkUser = users.data[0];
 
       // Verificar a senha do usuário
-      const result = await clerk.users.verifyPassword({
+      const result = await clerkClient.users.verifyPassword({
         userId: clerkUser.id,
         password: input.password,
       });
@@ -96,7 +105,7 @@ export class AuthService {
       const user = await ClientService.syncFromClerk(clerkUser.id);
 
       // Gerar um signInToken para o frontend
-      const signInToken = await clerk.signInTokens.createSignInToken({
+      const signInToken = await clerkClient.signInTokens.createSignInToken({
         userId: clerkUser.id,
         expiresInSeconds: 60 * 60 * 24, // 24 horas
       });
