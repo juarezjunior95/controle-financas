@@ -1,9 +1,11 @@
 import path from 'path';
 import { config } from 'dotenv';
-import { defineConfig, env } from "prisma/config";
+import { defineConfig } from "prisma/config";
 
-// Carregar .env da raiz do monorepo
-config({ path: path.join(__dirname, '../../.env') });
+// Carregar .env da raiz do monorepo (apenas local)
+if (process.env.NODE_ENV !== 'production') {
+  config({ path: path.join(__dirname, '../../.env') });
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -11,6 +13,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env.DATABASE_URL || "postgresql://mock:mock@localhost:5432/mock",
+    url: process.env.DATABASE_URL!,
   },
 });
