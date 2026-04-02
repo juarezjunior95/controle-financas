@@ -173,7 +173,7 @@ export default function LoginPage() {
                 <div className="flex justify-between items-center px-1">
                   <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Senha</label>
                   {isLoginMode && (
-                    <Link href="#" className="text-xs font-medium text-primary hover:text-on-primary-container transition-colors">Esqueceu a senha?</Link>
+                    <Link href="/forgot-password" className="text-xs font-medium text-primary hover:text-on-primary-container transition-colors">Esqueceu a senha?</Link>
                   )}
                 </div>
                 <div className="relative group">

@@ -50,6 +50,7 @@ try {
   // Rotas de autenticação
   apiRouter.post('/auth/register', AuthController.register);
   apiRouter.post('/auth/login', AuthController.login);
+  apiRouter.post('/auth/forgot-password', AuthController.forgotPassword);
   apiRouter.get('/auth/me', requireAuthentication, AuthController.me);
 
   // Rotas protegidas

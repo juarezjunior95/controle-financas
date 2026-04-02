@@ -107,4 +107,41 @@ export class AuthController {
       });
     }
   }
+
+  /**
+   * POST /api/v1/auth/forgot-password
+   * Solicita recuperação de senha.
+   */
+  static async forgotPassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        res.status(400).json({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'E-mail é obrigatório.',
+          },
+        });
+        return;
+      }
+
+      await AuthService.forgotPassword(email);
+
+      // Sempre retorna sucesso por segurança (não revela se email existe)
+      res.json({
+        data: {
+          message: 'Se o email existir em nossa base, você receberá um link para redefinir sua senha.',
+        },
+      });
+    } catch (error: any) {
+      console.error('[AuthController] Erro na recuperação de senha:', error);
+      // Mesmo em caso de erro, retornamos sucesso por segurança
+      res.json({
+        data: {
+          message: 'Se o email existir em nossa base, você receberá um link para redefinir sua senha.',
+        },
+      });
+    }
+  }
 }
