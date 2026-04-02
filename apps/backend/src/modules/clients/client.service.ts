@@ -23,6 +23,8 @@ export class ClientService {
    */
   static async syncClient(data: SyncUserData) {
     try {
+      console.log('[ClientService] Tentando sincronizar usuário:', data.email);
+      
       const user = await prisma.user.upsert({
         where: { email: data.email },
         update: {
@@ -38,10 +40,22 @@ export class ClientService {
         },
       });
 
+      console.log('[ClientService] Usuário sincronizado com sucesso:', user.id);
       return user;
-    } catch (error) {
-      console.error('[ClientService] Erro ao sincronizar usuário:', error);
-      throw new Error('Falha na sincronização do usuário com o banco de dados.');
+    } catch (error: any) {
+      console.error('[ClientService] Erro ao sincronizar usuário:', JSON.stringify({
+        message: error?.message,
+        code: error?.code,
+        meta: error?.meta,
+        name: error?.name,
+      }, null, 2));
+      
+      // Verificar se é erro de tabela não existente
+      if (error?.code === 'P2021' || error?.message?.includes('does not exist')) {
+        throw new Error('Tabela de usuários não existe. Execute as migrations do Prisma.');
+      }
+      
+      throw new Error(`Falha na sincronização: ${error?.message || 'Erro desconhecido'}`);
     }
   }
 
