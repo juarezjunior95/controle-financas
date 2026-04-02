@@ -1,19 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
 import { clerkMiddleware, getAuth } from '@clerk/express';
 
+const isClerkConfigured = !!process.env.CLERK_SECRET_KEY;
+
 /**
  * Middleware global do Clerk.
- * Deve ser registrado ANTES de qualquer outro middleware de rota.
- * Anexa o objeto `auth` ao request para todas as rotas.
+ * Se Clerk não estiver configurado, passa direto (permite health check).
  */
-export const clerkAuth = clerkMiddleware();
+export const clerkAuth = isClerkConfigured 
+  ? clerkMiddleware()
+  : (_req: Request, _res: Response, next: NextFunction) => next();
 
 /**
  * Middleware que exige autenticação.
  * Retorna 401 se o usuário não estiver autenticado.
- * Usado em rotas protegidas (CRUD de recursos).
+ * Retorna 503 se Clerk não estiver configurado.
  */
 export const requireAuthentication = (req: Request, res: Response, next: NextFunction): void => {
+  if (!isClerkConfigured) {
+    res.status(503).json({
+      error: {
+        code: 'AUTH_NOT_CONFIGURED',
+        message: 'Serviço de autenticação não configurado.',
+      },
+    });
+    return;
+  }
+
   const auth = getAuth(req);
 
   if (!auth?.userId) {
