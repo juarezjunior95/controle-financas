@@ -55,7 +55,18 @@ export class ClientService {
         throw new Error('Tabela de usuários não existe. Execute as migrations do Prisma.');
       }
       
-      throw new Error(`Falha na sincronização: ${error?.message || 'Erro desconhecido'}`);
+      const msg = error?.message || 'Erro desconhecido';
+      const unreachable =
+        typeof msg === 'string' &&
+        (msg.includes("Can't reach database server") || msg.includes('P1001'));
+      if (unreachable) {
+        throw new Error(
+          'Falha na sincronização: não foi possível conectar ao banco. Confira se o projeto Supabase está ' +
+            'ativo (não pausado), se DATABASE_URL está correta e se a string inclui SSL (ex.: ?sslmode=require). ' +
+            `Detalhe: ${msg}`
+        );
+      }
+      throw new Error(`Falha na sincronização: ${msg}`);
     }
   }
 

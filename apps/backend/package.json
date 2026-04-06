@@ -10,7 +10,8 @@
     "vercel-build": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "check-db": "npx tsx check-pg.ts"
   },
   "dependencies": {
     "@clerk/express": "^2.0.7",
