@@ -158,14 +158,14 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {/* Saldo Atual (Primary Anchor) */}
         <div className="md:col-span-1 bg-gradient-to-br from-[#b0c6ff]/10 to-transparent p-8 rounded-xl border border-[#b0c6ff]/10 shadow-[0_24px_48px_rgba(0,0,0,0.4)] relative overflow-hidden group">
-          <div className="absolute -top-4 -right-4 w-32 h-32 bg-[#b0c6ff]/5 rounded-full blur-3xl"></div>
-          <div className="flex justify-between items-start mb-8">
+          <div className="absolute -top-4 -right-4 w-32 h-32 bg-[#b0c6ff]/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="flex justify-between items-start mb-8 relative z-10">
             <div className="p-3 bg-[#b0c6ff]/20 rounded-2xl text-[#b0c6ff]">
               <span className="material-symbols-outlined" translate="no">account_balance</span>
             </div>
             <button
               onClick={() => setShowBalanceModal(true)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-full hover:bg-[#b0c6ff]/20"
+              className="p-2 rounded-full bg-[#b0c6ff]/10 hover:bg-[#b0c6ff]/30 transition-colors"
               title="Editar saldo inicial"
             >
               <span className="material-symbols-outlined text-[#b0c6ff] text-sm">edit</span>
