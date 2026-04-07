@@ -1,3 +1,4 @@
-.vercel
+.vercel/*
+!.vercel/project.json
 
 /src/generated/prisma

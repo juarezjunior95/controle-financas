@@ -20,14 +20,26 @@ function sslForDatabaseUrl(url: string): undefined | { rejectUnauthorized: boole
   return { rejectUnauthorized: false };
 }
 
+/** `pg` v8+ trata sslmode=require na URL como verify-full; removemos e usamos `ssl` do Pool. */
+function connectionStringForPgDriver(url: string): string {
+  try {
+    const parsed = new URL(url.replace(/^postgresql:/i, 'http:'));
+    parsed.searchParams.delete('sslmode');
+    return parsed.toString().replace(/^http:/i, 'postgresql:');
+  } catch {
+    return url;
+  }
+}
+
 function createPrismaClient(): PrismaClient {
   if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL não está configurada');
   }
 
+  const rawUrl = process.env.DATABASE_URL;
   const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: sslForDatabaseUrl(process.env.DATABASE_URL),
+    connectionString: connectionStringForPgDriver(rawUrl),
+    ssl: sslForDatabaseUrl(rawUrl),
   });
 
   const adapter = new PrismaPg(pool);

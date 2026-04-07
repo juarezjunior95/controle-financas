@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 import { Client } from 'pg';
 
 // Carrega .env do monorepo (raiz) e de apps/backend, onde quer que o comando seja executado
+const envFromShell = process.env.DATABASE_URL;
 const envCandidates = [
   path.join(process.cwd(), 'apps', 'backend', '.env'),
   path.join(process.cwd(), '.env'),
@@ -13,6 +14,10 @@ for (const p of envCandidates) {
   if (existsSync(p)) {
     config({ path: p, override: true });
   }
+}
+// DATABASE_URL passada no shell (ex.: teste rápido) não pode ser sobrescrita pelo .env
+if (envFromShell) {
+  process.env.DATABASE_URL = envFromShell;
 }
 
 async function check() {
@@ -25,13 +30,27 @@ async function check() {
     return;
   }
 
+  // Supabase: remover sslmode da URL para o driver `pg` (v8+ trata require como verify-full e ignora nosso ssl).
+  const rawUrl = process.env.DATABASE_URL;
+  let url = rawUrl;
+  try {
+    const parsed = new URL(rawUrl.replace(/^postgresql:/i, 'http:'));
+    parsed.searchParams.delete('sslmode');
+    url = parsed.toString().replace(/^http:/i, 'postgresql:');
+  } catch {
+    /* mantém rawUrl */
+  }
+  const isRemote =
+    rawUrl.includes('supabase.com') ||
+    rawUrl.includes('supabase.co') ||
+    (!rawUrl.includes('localhost') && !rawUrl.includes('127.0.0.1'));
   const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString: url,
+    ssl: isRemote ? { rejectUnauthorized: false } : undefined,
   });
 
   try {
-    console.log('[PG Check] Tentando conectar com:', process.env.DATABASE_URL?.replace(/:([^@]+)@/, ':****@'));
+    console.log('[PG Check] Tentando conectar com:', rawUrl.replace(/:([^@]+)@/, ':****@'));
     await client.connect();
     console.log('[PG Check] Sucesso! Conexão estabelecida.');
     const res = await client.query('SELECT current_user, current_database();');
