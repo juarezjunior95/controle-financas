@@ -83,8 +83,57 @@ export class TransactionController {
         return;
       }
 
-      const transactions = await TransactionService.listByUser(clerkId);
+      const { month, year, type } = req.query;
+
+      const transactions = await TransactionService.listByUser(clerkId, {
+        month: month ? Number(month) : undefined,
+        year: year ? Number(year) : undefined,
+        type: type as 'income' | 'expense' | undefined,
+      });
+
       res.status(200).json({ data: transactions });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Endpoint: PUT /api/v1/transactions/:id
+   */
+  static async update(req: Request, res: Response) {
+    try {
+      const auth = getAuth(req);
+      const clerkId = auth.userId;
+      const { id } = req.params;
+
+      if (!clerkId) {
+        res.status(401).json({ error: 'Nao autorizado' });
+        return;
+      }
+
+      const transaction = await TransactionService.update(clerkId, id, req.body);
+      res.status(200).json({ data: transaction, message: 'Transação atualizada.' });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Endpoint: DELETE /api/v1/transactions/:id
+   */
+  static async delete(req: Request, res: Response) {
+    try {
+      const auth = getAuth(req);
+      const clerkId = auth.userId;
+      const { id } = req.params;
+
+      if (!clerkId) {
+        res.status(401).json({ error: 'Nao autorizado' });
+        return;
+      }
+
+      await TransactionService.delete(clerkId, id);
+      res.status(200).json({ message: 'Transação excluída com sucesso.' });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

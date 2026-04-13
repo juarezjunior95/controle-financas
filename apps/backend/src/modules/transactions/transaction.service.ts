@@ -64,19 +64,94 @@ export class TransactionService {
   }
 
   /**
-   * Lista transações de um usuário.
+   * Lista transações de um usuário com filtros opcionais.
    */
-  static async listByUser(clerkId: string) {
+  static async listByUser(clerkId: string, filters?: { month?: number; year?: number; type?: 'income' | 'expense' }) {
     const user = await prisma.user.findUnique({
       where: { clerkId },
     });
 
     if (!user) return [];
 
+    const where: any = { userId: user.id };
+
+    if (filters?.type) {
+      where.type = filters.type;
+    }
+
+    if (filters?.month !== undefined && filters?.year !== undefined) {
+      const startDate = new Date(filters.year, filters.month, 1);
+      const endDate = new Date(filters.year, filters.month + 1, 0, 23, 59, 59);
+      
+      where.occurredOn = {
+        gte: startDate,
+        lte: endDate,
+      };
+    }
+
     return await prisma.transaction.findMany({
-      where: { userId: user.id },
+      where,
       include: { category: true },
       orderBy: { occurredOn: 'desc' },
+    });
+  }
+
+  /**
+   * Atualiza uma transação existente.
+   */
+  static async update(clerkId: string, id: string, data: Partial<CreateTransactionDto>) {
+    // 1. Verificar se o usuário existe
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (!user) throw new Error('Usuário não sincronizado.');
+
+    // 2. Se a categoria mudar, fazer o upsert dela
+    let categoryId = undefined;
+    if (data.category) {
+      const category = await prisma.category.upsert({
+        where: {
+          userId_name: {
+            userId: user.id,
+            name: data.category,
+          },
+        },
+        update: {},
+        create: {
+          userId: user.id,
+          name: data.category,
+        },
+      });
+      categoryId = category.id;
+    }
+
+    // 3. Atualizar a transação garantindo que pertence ao usuário
+    return await prisma.transaction.update({
+      where: {
+        id,
+        userId: user.id, // Segurança: só deleta se for do dono
+      },
+      data: {
+        type: data.type,
+        amount: data.amount,
+        description: data.description,
+        occurredOn: data.date ? new Date(data.date) : undefined,
+        categoryId: categoryId,
+      },
+      include: { category: true },
+    });
+  }
+
+  /**
+   * Remove uma transação.
+   */
+  static async delete(clerkId: string, id: string) {
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (!user) throw new Error('Usuário não sincronizado.');
+
+    return await prisma.transaction.delete({
+      where: {
+        id,
+        userId: user.id, // Segurança: só deleta se for do dono
+      },
     });
   }
 }
