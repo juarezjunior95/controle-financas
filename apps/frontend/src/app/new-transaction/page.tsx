@@ -3,10 +3,65 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
+import { fetchAPI } from "@/lib/api";
 
 export default function NewTransactionPage() {
   const router = useRouter();
+  const { getToken } = useAuth();
+  
+  // Estados do formulário
   const [type, setType] = useState<"expense" | "income">("expense");
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [category, setCategory] = useState("Alimentação");
+  const [description, setDescription] = useState("");
+  
+  // Estado de UI
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const token = await getToken();
+      
+      // Limpar o valor (remover R$, etc se necessário, mas aqui é simples)
+      const numericAmount = parseFloat(amount.replace(',', '.'));
+
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        throw new Error("Por favor, insira um valor válido.");
+      }
+
+      const { error: apiError } = await fetchAPI("/transactions", {
+        method: "POST",
+        token,
+        body: JSON.stringify({
+          type,
+          amount: numericAmount,
+          date,
+          category,
+          description,
+        }),
+      });
+
+      if (apiError) {
+        throw new Error(apiError.message);
+      }
+
+      // Sucesso! Voltar para a página anterior ou dashboard
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err: any) {
+      console.error("[NewTransaction] Erro ao salvar:", err);
+      setError(err.message || "Ocorreu um erro ao salvar a transação.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-background text-on-surface font-body selection:bg-primary/30 min-h-screen flex items-center justify-center p-4 md:p-8">
@@ -41,7 +96,7 @@ export default function NewTransactionPage() {
         </div>
 
         {/* Main Form Area */}
-        <div className="flex-1 p-6 md:p-10 flex flex-col">
+        <div className="flex-1 p-6 md:p-10 flex flex-col font-medium">
           {/* Mobile Header */}
           <div className="flex md:hidden items-center justify-between mb-8">
             <h1 className="font-headline text-xl font-bold text-on-surface tracking-tight">Novo Lançamento</h1>
@@ -53,11 +108,12 @@ export default function NewTransactionPage() {
             </button>
           </div>
 
-          <form className="space-y-8 flex-1" onSubmit={(e) => e.preventDefault()}>
+          <form className="space-y-8 flex-1" onSubmit={handleSubmit}>
             {/* Toggle: Income / Expense */}
             <div className="flex p-1 bg-surface-container-highest rounded-full w-full max-w-xs mx-auto md:mx-0">
               <button 
                 type="button"
+                disabled={loading}
                 onClick={() => setType("expense")}
                 className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 ${type === 'expense' ? 'bg-error text-on-error shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
               >
@@ -65,6 +121,7 @@ export default function NewTransactionPage() {
               </button>
               <button 
                 type="button"
+                disabled={loading}
                 onClick={() => setType("income")}
                 className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 ${type === 'income' ? 'bg-primary text-on-primary shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
               >
@@ -81,6 +138,10 @@ export default function NewTransactionPage() {
                   className="bg-transparent border-none p-0 text-5xl md:text-6xl font-headline font-black text-on-surface placeholder:text-surface-variant focus:ring-0 w-full tracking-tighter" 
                   placeholder="0,00" 
                   type="text"
+                  required
+                  disabled={loading}
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
                 />
               </div>
               <div className="h-px w-full bg-outline-variant/20 group-focus-within:bg-primary transition-colors mt-2"></div>
@@ -96,7 +157,10 @@ export default function NewTransactionPage() {
                   <input 
                     className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none" 
                     type="date" 
-                    defaultValue="2023-10-27"
+                    required
+                    disabled={loading}
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
                   />
                 </div>
               </div>
@@ -106,13 +170,19 @@ export default function NewTransactionPage() {
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Categoria</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-xl">category</span>
-                  <select className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-10 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer">
+                  <select 
+                    className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-10 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
+                    value={category}
+                    disabled={loading}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
                     <option>Alimentação</option>
                     <option>Transporte</option>
                     <option>Moradia</option>
                     <option>Saúde</option>
                     <option>Lazer</option>
                     <option>Trabalho</option>
+                    <option>Investimentos</option>
                     <option>Outros</option>
                   </select>
                   <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
@@ -129,20 +199,39 @@ export default function NewTransactionPage() {
                   className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/40 resize-none custom-scrollbar" 
                   placeholder="Ex: Almoço com a equipe de design..." 
                   rows={3}
+                  disabled={loading}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                 ></textarea>
               </div>
             </div>
 
+            {error && (
+              <div className="p-4 bg-error/10 border border-error/20 rounded-xl text-error text-sm font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg">error</span>
+                {error}
+              </div>
+            )}
+
             {/* Actions */}
             <div className="pt-6 flex flex-col md:flex-row-reverse gap-4">
               <button 
-                className="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black py-4 rounded-full shadow-[0_8px_20px_rgba(0,88,203,0.3)] hover:scale-[1.02] active:scale-95 transition-all duration-200 uppercase tracking-widest text-sm" 
+                className="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black py-4 rounded-full shadow-[0_8px_20px_rgba(0,88,203,0.3)] hover:scale-[1.02] active:scale-95 transition-all duration-200 uppercase tracking-widest text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale" 
                 type="submit"
+                disabled={loading}
               >
-                Salvar Lançamento
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin"></div>
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar Lançamento'
+                )}
               </button>
               <button 
                 type="button"
+                disabled={loading}
                 onClick={() => router.back()}
                 className="flex-1 border border-outline-variant/30 text-on-surface-variant font-bold py-4 rounded-full hover:bg-surface-container-highest transition-colors uppercase tracking-widest text-sm"
               >

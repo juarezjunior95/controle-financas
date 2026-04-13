@@ -40,6 +40,7 @@ try {
   const { clerkAuth, requireAuthentication } = require('./middleware/auth.middleware');
   const { AuthController } = require('./modules/auth/auth.controller');
   const { ClientController } = require('./modules/clients/client.controller');
+  const { TransactionController } = require('./modules/transactions/transaction.controller');
 
   // Clerk middleware global — anexa auth state em todas as rotas
   app.use(clerkAuth);
@@ -55,6 +56,10 @@ try {
 
   // Rotas protegidas
   apiRouter.get('/clients/me', requireAuthentication, ClientController.getProfile);
+
+  // Rotas de transações
+  apiRouter.post('/transactions', requireAuthentication, TransactionController.create);
+  apiRouter.get('/transactions', requireAuthentication, TransactionController.list);
 
   // Montar versionamento da API
   app.use('/api/v1', apiRouter);
