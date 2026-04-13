@@ -57,9 +57,13 @@ try {
   // Rotas protegidas
   apiRouter.get('/clients/me', requireAuthentication, ClientController.getProfile);
 
-  // Rotas de transações
-  apiRouter.post('/transactions', requireAuthentication, TransactionController.create);
+  // Rotas de transações (summary antes de :id para evitar conflito de rota)
+  apiRouter.get('/transactions/summary', requireAuthentication, TransactionController.summary);
   apiRouter.get('/transactions', requireAuthentication, TransactionController.list);
+  apiRouter.post('/transactions', requireAuthentication, TransactionController.create);
+  apiRouter.get('/transactions/:id', requireAuthentication, TransactionController.getById);
+  apiRouter.put('/transactions/:id', requireAuthentication, TransactionController.update);
+  apiRouter.delete('/transactions/:id', requireAuthentication, TransactionController.remove);
 
   // Montar versionamento da API
   app.use('/api/v1', apiRouter);
@@ -68,7 +72,7 @@ try {
 } catch (error: any) {
   initError = error;
   console.error('[Backend] Erro ao carregar módulos:', error);
-  
+
   // Rota de fallback para informar o erro
   app.use('/api/v1/*', (_req, res) => {
     res.status(503).json({
