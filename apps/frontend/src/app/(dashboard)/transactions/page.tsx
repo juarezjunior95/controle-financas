@@ -1,7 +1,175 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
+import { fetchAPI } from "@/lib/api";
+import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
+
+interface Transaction {
+  id: string;
+  type: "income" | "expense";
+  amount: number;
+  description: string;
+  occurredOn: string;
+  category: {
+    name: string;
+  };
+}
 
 export default function TransactionsPage() {
+  const { getToken } = useAuth();
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+
+  // Estados dos filtros
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedType, setSelectedType] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const loadTransactions = async () => {
+    try {
+      setLoading(true);
+      const token = await getToken();
+      
+      const params = new URLSearchParams({
+        month: selectedMonth.toString(),
+        year: selectedYear.toString(),
+      });
+      
+      if (selectedType !== "all") {
+        params.append("type", selectedType);
+      }
+
+      const { data, error: apiError } = await fetchAPI<Transaction[]>(`/transactions?${params.toString()}`, { token });
+
+      if (apiError) throw new Error(apiError.message);
+      setTransactions(data || []);
+      setError(null);
+    } catch (err: any) {
+      console.error("[Transactions] Erro ao carregar:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Deseja realmente excluir esta transação?")) return;
+
+    try {
+      const token = await getToken();
+      const { error: apiError } = await fetchAPI(`/transactions/${id}`, {
+        method: "DELETE",
+        token,
+      });
+
+      if (apiError) throw new Error(apiError.message);
+      
+      // Remove localmente para resposta rápida
+      setTransactions(prev => prev.filter(tx => tx.id !== id));
+      setError(null);
+    } catch (err: any) {
+      console.error("[Transactions] Erro ao excluir:", err);
+      setError("Falha ao excluir transação: " + err.message);
+    }
+  };
+
+  const handleUpdate = async (data: any) => {
+    if (!editingTransaction) return;
+
+    try {
+      const token = await getToken();
+      const { error: apiError } = await fetchAPI(`/transactions/${editingTransaction.id}`, {
+        method: "PUT",
+        token,
+        body: data,
+      });
+
+      if (apiError) throw new Error(apiError.message);
+      
+      loadTransactions();
+      setEditingTransaction(null);
+    } catch (err: any) {
+      console.error("[Transactions] Erro ao atualizar:", err);
+      setError("Falha ao atualizar transação: " + err.message);
+    }
+  };
+
+  useEffect(() => {
+    loadTransactions();
+  }, [selectedMonth, selectedYear, selectedType]);
+
+  // Formatação de Moeda
+  const formatCurrency = (value: number | string) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(Number(value));
+  };
+
+  const formatDateLabel = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) return "Hoje";
+    if (date.toDateString() === yesterday.toDateString()) return "Ontem";
+
+    return date.toLocaleDateString("pt-BR", { 
+      day: "2-digit", 
+      month: "long",
+    });
+  };
+
+  // Filtragem local por busca e Agrupamento
+  const { groupedTransactions, totals } = useMemo(() => {
+    const filtered = transactions.filter(tx => 
+      (tx.description?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      tx.category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const groups: Record<string, { dateLabel: string; items: Transaction[]; total: number }> = {};
+    let income = 0;
+    let expense = 0;
+
+    filtered.forEach((tx) => {
+      const dateKey = tx.occurredOn.split("T")[0];
+      const val = Number(tx.amount);
+
+      if (tx.type === "income") income += val;
+      else expense += val;
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = {
+          dateLabel: formatDateLabel(tx.occurredOn),
+          items: [],
+          total: 0,
+        };
+      }
+      groups[dateKey].items.push(tx);
+      groups[dateKey].total += tx.type === "income" ? val : -val;
+    });
+
+    return {
+      groupedTransactions: Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0])),
+      totals: { income, expense, balance: income - expense },
+    };
+  }, [transactions, searchQuery]);
+
+  // Lista de meses e anos para os selects
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  
+  const years = Array.from({ length: 5 }, (_, i) => now.getFullYear() - i);
+
   return (
     <div className="flex flex-col gap-8 w-full">
       <header className="flex items-center justify-between w-full">
@@ -25,234 +193,161 @@ export default function TransactionsPage() {
       {/* Search & Filters Bar */}
       <section className="space-y-4 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          {/* Search Input */}
           <div className="lg:col-span-6 relative">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-60">
               search
             </span>
             <input
               className="w-full bg-surface-container-high border-none rounded-2xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary transition-all"
-              placeholder="Pesquisar por descrição ou tag..."
+              placeholder="Pesquisar transações..."
               type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          {/* Filters */}
           <div className="lg:col-span-6 grid grid-cols-3 gap-3">
-            <div className="relative">
-              <select className="w-full appearance-none bg-surface-container-high border-none rounded-2xl py-3.5 px-4 text-sm text-on-surface font-medium focus:ring-1 focus:ring-primary transition-all pr-10">
-                <option>Outubro 2023</option>
-                <option>Setembro 2023</option>
-                <option>Agosto 2023</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
-                keyboard_arrow_down
-              </span>
-            </div>
-            <div className="relative">
-              <select className="w-full appearance-none bg-surface-container-high border-none rounded-2xl py-3.5 px-4 text-sm text-on-surface font-medium focus:ring-1 focus:ring-primary transition-all pr-10">
-                <option>Categorias</option>
-                <option>Alimentação</option>
-                <option>Moradia</option>
-                <option>Transporte</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
-                keyboard_arrow_down
-              </span>
-            </div>
-            <div className="relative">
-              <select className="w-full appearance-none bg-surface-container-high border-none rounded-2xl py-3.5 px-4 text-sm text-on-surface font-medium focus:ring-1 focus:ring-primary transition-all pr-10">
-                <option>Tipo</option>
-                <option>Entrada</option>
-                <option>Saída</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-on-surface-variant">
-                keyboard_arrow_down
-              </span>
-            </div>
+            <select 
+              value={selectedMonth} 
+              onChange={(e) => setSelectedMonth(Number(e.target.value))}
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary"
+            >
+              {months.map((m, i) => <option key={m} value={i}>{m}</option>)}
+            </select>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary"
+            >
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+            <select 
+              value={selectedType} 
+              onChange={(e) => setSelectedType(e.target.value)}
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary"
+            >
+              <option value="all">Tipo</option>
+              <option value="income">Entradas</option>
+              <option value="expense">Saídas</option>
+            </select>
           </div>
         </div>
       </section>
 
       {/* Content Canvas */}
       <section className="flex-1 w-full pb-12">
-        {/* Summary Stats (Mini Bento) */}
+        {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-surface-container-high rounded-2xl p-6 relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors"></div>
-            <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">
-              Entradas Mensais
-            </p>
-            <div className="flex items-end gap-2">
-              <h3 className="font-headline text-2xl font-bold text-primary">
-                R$ 12.450,00
-              </h3>
-              <span className="text-xs text-primary mb-1">+4.2%</span>
-            </div>
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl"></div>
+            <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Entradas</p>
+            <h3 className="font-headline text-2xl font-bold text-primary">{formatCurrency(totals.income)}</h3>
           </div>
           <div className="bg-surface-container-high rounded-2xl p-6 relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-error/5 rounded-full blur-2xl group-hover:bg-error/10 transition-colors"></div>
-            <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">
-              Saídas Mensais
-            </p>
-            <div className="flex items-end gap-2">
-              <h3 className="font-headline text-2xl font-bold text-error">
-                R$ 7.820,45
-              </h3>
-              <span className="text-xs text-error mb-1">-2.1%</span>
-            </div>
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-error/5 rounded-full blur-2xl"></div>
+            <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Saídas</p>
+            <h3 className="font-headline text-2xl font-bold text-error">{formatCurrency(totals.expense)}</h3>
           </div>
           <div className="bg-surface-container-high rounded-2xl p-6 relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 w-24 h-24 bg-on-surface/5 rounded-full blur-2xl group-hover:bg-on-surface/10 transition-colors"></div>
-            <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">
-              Saldo Projetado
-            </p>
-            <div className="flex items-end gap-2">
-              <h3 className="font-headline text-2xl font-bold text-on-surface">
-                R$ 4.629,55
-              </h3>
-            </div>
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-on-surface/5 rounded-full blur-2xl"></div>
+            <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Saldo</p>
+            <h3 className="font-headline text-2xl font-bold text-on-surface">{formatCurrency(totals.balance)}</h3>
           </div>
         </div>
 
-        {/* Transaction List State: FILLED */}
-        <div className="space-y-6">
-          {/* Date Group 1 */}
-          <div>
-            <div className="flex items-center justify-between mb-4 px-2">
-              <h4 className="font-label text-sm font-bold text-on-surface-variant opacity-80">
-                Hoje, 24 de Outubro
-              </h4>
-              <span className="text-xs text-on-surface-variant">
-                R$ -420,00
-              </span>
-            </div>
-            <div className="space-y-3">
-              {/* Transaction Item */}
-              <div className="bg-surface-container-low hover:bg-surface-container-highest transition-all duration-200 rounded-2xl p-4 flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center text-on-surface">
-                    <span className="material-symbols-outlined">
-                      shopping_cart
-                    </span>
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-on-surface">
-                      Supermercado Pão de Açúcar
-                    </h5>
-                    <p className="text-xs text-on-surface-variant">
-                      Alimentação • 14:20
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  <span className="font-headline font-bold text-error">
-                    - R$ 345,60
-                  </span>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-primary transition-colors">
-                      <span className="material-symbols-outlined text-sm">
-                        edit
-                      </span>
-                    </button>
-                    <button className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-error transition-colors">
-                      <span className="material-symbols-outlined text-sm">
-                        delete
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              {/* Transaction Item */}
-              <div className="bg-surface-container-low hover:bg-surface-container-highest transition-all duration-200 rounded-2xl p-4 flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center text-on-surface">
-                    <span className="material-symbols-outlined">
-                      directions_car
-                    </span>
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-on-surface">
-                      Posto Shell Alvorada
-                    </h5>
-                    <p className="text-xs text-on-surface-variant">
-                      Transporte • 09:15
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  <span className="font-headline font-bold text-error">
-                    - R$ 74,40
-                  </span>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-primary transition-colors">
-                      <span className="material-symbols-outlined text-sm">
-                        edit
-                      </span>
-                    </button>
-                    <button className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-error transition-colors">
-                      <span className="material-symbols-outlined text-sm">
-                        delete
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {error && (
+          <div className="bg-error/10 border border-error/20 text-error p-4 rounded-2xl mb-8 flex items-center gap-3">
+            <span className="material-symbols-outlined">error</span>
+            <p className="font-medium">Erro: {error}</p>
           </div>
+        )}
 
-          {/* Date Group 2 */}
-          <div>
-            <div className="flex items-center justify-between mb-4 px-2">
-              <h4 className="font-label text-sm font-bold text-on-surface-variant opacity-80">
-                Ontem, 23 de Outubro
-              </h4>
-              <span className="text-xs text-on-surface-variant">
-                R$ +5.000,00
-              </span>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            <p className="text-on-surface-variant animate-pulse">Carregando dados...</p>
+          </div>
+        ) : transactions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center bg-surface-container-low rounded-3xl border-2 border-dashed border-outline-variant/30">
+            <div className="w-20 h-20 bg-surface-container-highest rounded-full flex items-center justify-center mb-6">
+              <span className="material-symbols-outlined text-4xl text-on-surface-variant/40">receipt_long</span>
             </div>
-            <div className="space-y-3">
-              {/* Transaction Item */}
-              <div className="bg-surface-container-low hover:bg-surface-container-highest transition-all duration-200 rounded-2xl p-4 flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary-container/20 rounded-xl flex items-center justify-center text-primary">
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      payments
-                    </span>
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-on-surface">
-                      Salário • Software House Corp
-                    </h5>
-                    <p className="text-xs text-on-surface-variant">
-                      Rendimentos • 10:00
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6">
-                  <span className="font-headline font-bold text-primary">
-                    + R$ 5.000,00
+            <h3 className="text-xl font-bold text-on-surface mb-2">Nenhuma transação encontrada</h3>
+            <p className="text-on-surface-variant max-w-xs mb-8">Não encontramos registros para o filtro selecionado.</p>
+            <button onClick={() => { setSelectedMonth(now.getMonth()); setSelectedType("all"); setSearchQuery(""); }} className="text-primary hover:underline font-bold">
+              Limpar Filtros
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {groupedTransactions.map(([dateKey, group]) => (
+              <div key={dateKey}>
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <h4 className="font-label text-sm font-bold text-on-surface-variant opacity-80 uppercase tracking-tighter">
+                    {group.dateLabel}
+                  </h4>
+                  <span className={`text-xs font-bold ${group.total >= 0 ? 'text-primary' : 'text-error'}`}>
+                    {group.total >= 0 ? '+' : '-'} {formatCurrency(Math.abs(group.total))}
                   </span>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-primary transition-colors">
-                      <span className="material-symbols-outlined text-sm">
-                        edit
-                      </span>
-                    </button>
-                    <button className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-error transition-colors">
-                      <span className="material-symbols-outlined text-sm">
-                        delete
-                      </span>
-                    </button>
-                  </div>
+                </div>
+                <div className="space-y-3">
+                  {group.items.map((tx) => (
+                    <div key={tx.id} className="bg-surface-container-low hover:bg-surface-container-highest transition-all duration-200 rounded-2xl p-4 flex items-center justify-between group">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${tx.type === 'income' ? 'bg-primary/10 text-primary' : 'bg-on-surface/5 text-on-surface'}`}>
+                          <span className="material-symbols-outlined">
+                            {tx.type === 'income' ? 'payments' : 'shopping_cart'}
+                          </span>
+                        </div>
+                        <div>
+                          <h5 className="font-bold text-on-surface">{tx.description || tx.category.name}</h5>
+                          <p className="text-xs text-on-surface-variant">
+                            {tx.category.name}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <span className={`font-headline font-bold ${tx.type === 'income' ? 'text-primary' : 'text-error'}`}>
+                          {tx.type === 'income' ? '+' : '-'} {formatCurrency(tx.amount)}
+                        </span>
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={() => setEditingTransaction(tx)}
+                            className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-primary transition-colors"
+                            title="Editar"
+                          >
+                            <span className="material-symbols-outlined text-sm">edit</span>
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(tx.id)}
+                            className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-error transition-colors"
+                            title="Excluir"
+                          >
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        </div>
+        )}
       </section>
+
+      {editingTransaction && (
+        <TransactionModal
+          isOpen={!!editingTransaction}
+          onClose={() => setEditingTransaction(null)}
+          onSave={handleUpdate}
+          initialData={{
+            ...editingTransaction,
+            date: editingTransaction.occurredOn // Mapeia occurredOn para date esperado pelo modal
+          }}
+        />
+      )}
     </div>
   );
 }
+
+

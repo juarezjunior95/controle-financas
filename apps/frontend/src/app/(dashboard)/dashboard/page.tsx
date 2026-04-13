@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { MonthSelector } from "@/components/dashboard/MonthSelector";
 import { EditBalanceModal } from "@/components/dashboard/EditBalanceModal";
-import { QuickTransactionModal } from "@/components/dashboard/QuickTransactionModal";
+import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
 import {
   getInitialBalance,
   setInitialBalance,
@@ -414,7 +414,7 @@ export default function DashboardPage() {
         onSave={handleSaveBalance}
       />
 
-      <QuickTransactionModal
+      <TransactionModal
         isOpen={showTransactionModal}
         onClose={() => setShowTransactionModal(false)}
         onSave={handleAddTransaction}

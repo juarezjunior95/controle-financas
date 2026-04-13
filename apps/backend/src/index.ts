@@ -60,6 +60,8 @@ try {
   // Rotas de transações
   apiRouter.post('/transactions', requireAuthentication, TransactionController.create);
   apiRouter.get('/transactions', requireAuthentication, TransactionController.list);
+  apiRouter.put('/transactions/:id', requireAuthentication, TransactionController.update);
+  apiRouter.delete('/transactions/:id', requireAuthentication, TransactionController.delete);
 
   // Montar versionamento da API
   app.use('/api/v1', apiRouter);

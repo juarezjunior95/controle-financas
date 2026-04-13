@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "../ui/Modal";
 import { Category, getCategories, parseCurrency } from "@/lib/storage";
 
-interface QuickTransactionModalProps {
+interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (transaction: {
@@ -14,19 +14,51 @@ interface QuickTransactionModalProps {
     description: string;
     date: string;
   }) => void;
+  initialData?: {
+    id: string;
+    type: "income" | "expense";
+    amount: number;
+    description: string;
+    date: string;
+    category: {
+      name: string;
+    };
+  };
 }
 
-export function QuickTransactionModal({
+export function TransactionModal({
   isOpen,
   onClose,
   onSave,
-}: QuickTransactionModalProps) {
+  initialData,
+}: TransactionModalProps) {
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [categories] = useState<Category[]>(getCategories());
+
+  useEffect(() => {
+    if (initialData && isOpen) {
+      setType(initialData.type);
+      // Formata o valor de volta para string com vírgula para o input
+      setAmount(initialData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }).replace('R$', '').trim());
+      setDescription(initialData.description || "");
+      setDate(new Date(initialData.date).toISOString().split("T")[0]);
+      
+      // Tenta encontrar a categoria pelo nome para marcar no grid (simplificação temporária)
+      const cat = categories.find(c => c.name === initialData.category.name);
+      if (cat) setCategoryId(cat.id);
+    } else if (isOpen) {
+      // Reset para nova transação
+      setType("expense");
+      setAmount("");
+      setDescription("");
+      setCategoryId("");
+      setDate(new Date().toISOString().split("T")[0]);
+    }
+  }, [initialData, isOpen, categories]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,11 +82,6 @@ export function QuickTransactionModal({
       date,
     });
 
-    // Reset form
-    setAmount("");
-    setDescription("");
-    setCategoryId("");
-    setDate(new Date().toISOString().split("T")[0]);
     onClose();
   };
 
@@ -63,16 +90,13 @@ export function QuickTransactionModal({
     setAmount(raw);
   };
 
-  const incomeCategories = categories.filter(c => 
-    ["Salário", "Freelance", "Outros"].includes(c.name)
-  );
-  const expenseCategories = categories.filter(c => 
-    !["Salário", "Freelance"].includes(c.name)
-  );
-  const filteredCategories = type === "income" ? incomeCategories : expenseCategories;
+  const filteredCategories = categories.filter(c => {
+    const isIncomeCat = ["Salário", "Freelance", "Outros"].includes(c.name);
+    return type === "income" ? isIncomeCat : !isIncomeCat;
+  });
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nova Transação">
+    <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "Editar Transação" : "Nova Transação"}>
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Tipo */}
         <div className="flex p-1 bg-background rounded-full">
@@ -201,8 +225,10 @@ export function QuickTransactionModal({
                 : "bg-red-500 text-white hover:bg-red-600"
             }`}
           >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Adicionar
+            <span className="material-symbols-outlined text-lg">
+              {initialData ? "save" : "add"}
+            </span>
+            {initialData ? "Salvar Alterações" : "Adicionar"}
           </button>
         </div>
       </form>
