@@ -1,24 +1,15 @@
-import { Request, Response } from 'express';
-import { getAuth } from '@clerk/express';
+import { Response } from 'express';
 import { ClientService } from './client.service';
+import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
 export class ClientController {
   /**
    * GET /api/v1/clients/me
    * Retorna o perfil do cliente autenticado.
    */
-  static async getProfile(req: Request, res: Response): Promise<void> {
+  static async getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
-
-      if (!auth?.userId) {
-        res.status(401).json({
-          error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' },
-        });
-        return;
-      }
-
-      const cliente = await ClientService.getByClerkId(auth.userId);
+      const cliente = await ClientService.getByClerkId(req.auth!.clerkId);
 
       if (!cliente) {
         res.status(404).json({

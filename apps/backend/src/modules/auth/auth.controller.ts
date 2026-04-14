@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { getAuth } from '@clerk/express';
 import { AuthService } from './auth.service';
+import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
 export class AuthController {
   /**
@@ -80,11 +80,11 @@ export class AuthController {
    * Retorna os dados do usuário autenticado.
    * Requer token Bearer válido.
    */
-  static async me(req: Request, res: Response): Promise<void> {
+  static async me(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
+      const clerkId = req.auth?.clerkId;
 
-      if (!auth?.userId) {
+      if (!clerkId) {
         res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
@@ -94,7 +94,7 @@ export class AuthController {
         return;
       }
 
-      const user = await AuthService.getMe(auth.userId);
+      const user = await AuthService.getMe(clerkId);
 
       res.json({ data: user });
     } catch (error: any) {

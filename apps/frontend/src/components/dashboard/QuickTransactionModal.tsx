@@ -2,18 +2,14 @@
 
 import { useState } from "react";
 import { Modal } from "../ui/Modal";
-import { Category, getCategories, parseCurrency } from "@/lib/storage";
+import { parseCurrency, DEFAULT_CATEGORIES } from "@/lib/storage";
+import { fetchAPI } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 
 interface QuickTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (transaction: {
-    type: "income" | "expense";
-    amount: number;
-    categoryId: string;
-    description: string;
-    date: string;
-  }) => void;
+  onSave: () => void;
 }
 
 export function QuickTransactionModal({
@@ -21,40 +17,59 @@ export function QuickTransactionModal({
   onClose,
   onSave,
 }: QuickTransactionModalProps) {
+  const { token } = useAuth();
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [categories] = useState<Category[]>(getCategories());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const categories = DEFAULT_CATEGORIES;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setErrorMsg(null);
+
     const numericAmount = parseCurrency(amount);
     if (numericAmount <= 0) {
-      alert("Digite um valor válido");
+      setErrorMsg("Digite um valor válido.");
       return;
     }
 
-    if (!categoryId) {
-      alert("Selecione uma categoria");
+    if (!categoryName) {
+      setErrorMsg("Selecione uma categoria.");
       return;
     }
 
-    onSave({
-      type,
-      amount: numericAmount,
-      categoryId,
-      description,
-      date,
+    setIsSubmitting(true);
+
+    const { error } = await fetchAPI("/transactions", {
+      method: "POST",
+      token,
+      body: JSON.stringify({
+        type,
+        amount: numericAmount,
+        category: categoryName,
+        description,
+        date,
+      }),
     });
+
+    setIsSubmitting(false);
+
+    if (error) {
+      setErrorMsg(error.message);
+      return;
+    }
 
     // Reset form
     setAmount("");
     setDescription("");
-    setCategoryId("");
+    setCategoryName("");
     setDate(new Date().toISOString().split("T")[0]);
+    onSave();
     onClose();
   };
 
@@ -63,13 +78,14 @@ export function QuickTransactionModal({
     setAmount(raw);
   };
 
-  const incomeCategories = categories.filter(c => 
+  const incomeCategories = categories.filter((c) =>
     ["Salário", "Freelance", "Outros"].includes(c.name)
   );
-  const expenseCategories = categories.filter(c => 
-    !["Salário", "Freelance"].includes(c.name)
+  const expenseCategories = categories.filter(
+    (c) => !["Salário", "Freelance"].includes(c.name)
   );
-  const filteredCategories = type === "income" ? incomeCategories : expenseCategories;
+  const filteredCategories =
+    type === "income" ? incomeCategories : expenseCategories;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Nova Transação">
@@ -78,7 +94,7 @@ export function QuickTransactionModal({
         <div className="flex p-1 bg-background rounded-full">
           <button
             type="button"
-            onClick={() => { setType("expense"); setCategoryId(""); }}
+            onClick={() => { setType("expense"); setCategoryName(""); }}
             className={`flex-1 py-2.5 px-4 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
               type === "expense"
                 ? "bg-red-500/20 text-red-400"
@@ -90,7 +106,7 @@ export function QuickTransactionModal({
           </button>
           <button
             type="button"
-            onClick={() => { setType("income"); setCategoryId(""); }}
+            onClick={() => { setType("income"); setCategoryName(""); }}
             className={`flex-1 py-2.5 px-4 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
               type === "income"
                 ? "bg-green-500/20 text-green-400"
@@ -114,10 +130,10 @@ export function QuickTransactionModal({
             <input
               type="text"
               value={amount}
-              onChange={handleAmountChange}
+              onChange={(e) => setAmount(e.target.value.replace(/[^\d,]/g, ""))}
               className={`w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-2xl font-bold focus:ring-2 transition-all text-right ${
-                type === "income" 
-                  ? "text-green-400 focus:ring-green-500" 
+                type === "income"
+                  ? "text-green-400 focus:ring-green-500"
                   : "text-red-400 focus:ring-red-500"
               }`}
               placeholder="0,00"
@@ -136,9 +152,9 @@ export function QuickTransactionModal({
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setCategoryId(cat.id)}
+                onClick={() => setCategoryName(cat.name)}
                 className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
-                  categoryId === cat.id
+                  categoryName === cat.name
                     ? "bg-primary/20 ring-2 ring-primary"
                     : "bg-surface-container-highest hover:bg-surface-container-high"
                 }`}
@@ -184,25 +200,38 @@ export function QuickTransactionModal({
           />
         </div>
 
+        {/* Erro */}
+        {errorMsg && (
+          <p className="text-red-400 text-sm text-center">{errorMsg}</p>
+        )}
+
         {/* Botões */}
         <div className="flex gap-3 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-3 px-4 rounded-full border border-outline-variant/20 text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors"
+            disabled={isSubmitting}
+            className="flex-1 py-3 px-4 rounded-full border border-outline-variant/20 text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className={`flex-1 py-3 px-4 rounded-full font-bold transition-colors flex items-center justify-center gap-2 ${
+            disabled={isSubmitting}
+            className={`flex-1 py-3 px-4 rounded-full font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 ${
               type === "income"
                 ? "bg-green-500 text-white hover:bg-green-600"
                 : "bg-red-500 text-white hover:bg-red-600"
             }`}
           >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Adicionar
+            {isSubmitting ? (
+              <span className="material-symbols-outlined text-lg animate-spin">
+                progress_activity
+              </span>
+            ) : (
+              <span className="material-symbols-outlined text-lg">add</span>
+            )}
+            {isSubmitting ? "Salvando..." : "Adicionar"}
           </button>
         </div>
       </form>

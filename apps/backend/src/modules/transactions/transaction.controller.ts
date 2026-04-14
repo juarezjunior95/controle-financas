@@ -1,22 +1,16 @@
-import { Request, Response } from 'express';
-import { getAuth } from '@clerk/express';
+import { Response } from 'express';
 import { ClientService } from '../clients/client.service';
 import { TransactionService } from './transaction.service';
+import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
 export class TransactionController {
   /**
    * GET /api/v1/transactions
    * Lista transações do usuário autenticado, com filtros opcionais de mês/ano/tipo.
    */
-  static async list(req: Request, res: Response): Promise<void> {
+  static async list(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
-      if (!auth?.userId) {
-        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' } });
-        return;
-      }
-
-      const user = await ClientService.getByClerkId(auth.userId);
+      const user = await ClientService.getByClerkId(req.auth!.clerkId);
       if (!user) {
         res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'Usuário não encontrado.' } });
         return;
@@ -44,14 +38,8 @@ export class TransactionController {
    * POST /api/v1/transactions
    * Cria uma nova transação. Aceita `category` (nome) com upsert automático de categoria.
    */
-  static async create(req: Request, res: Response): Promise<void> {
+  static async create(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
-      if (!auth?.userId) {
-        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Autenticação obrigatória.' } });
-        return;
-      }
-
       const { type, amount, description, date, category } = req.body;
 
       if (!type || amount === undefined || !date || !category) {
@@ -68,8 +56,14 @@ export class TransactionController {
         return;
       }
 
+      const user = await ClientService.getByClerkId(req.auth!.clerkId);
+      if (!user) {
+        res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'Usuário não encontrado.' } });
+        return;
+      }
+
       const transaction = await TransactionService.create({
-        userId: auth.userId,
+        userId: user.id,
         type,
         amount: Number(amount),
         description: description || '',
@@ -90,15 +84,9 @@ export class TransactionController {
    * GET /api/v1/transactions/:id
    * Busca uma transação específica do usuário autenticado.
    */
-  static async getById(req: Request, res: Response): Promise<void> {
+  static async getById(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
-      if (!auth?.userId) {
-        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' } });
-        return;
-      }
-
-      const user = await ClientService.getByClerkId(auth.userId);
+      const user = await ClientService.getByClerkId(req.auth!.clerkId);
       if (!user) {
         res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'Usuário não encontrado.' } });
         return;
@@ -121,15 +109,9 @@ export class TransactionController {
    * PUT /api/v1/transactions/:id
    * Atualiza uma transação do usuário autenticado.
    */
-  static async update(req: Request, res: Response): Promise<void> {
+  static async update(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
-      if (!auth?.userId) {
-        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' } });
-        return;
-      }
-
-      const user = await ClientService.getByClerkId(auth.userId);
+      const user = await ClientService.getByClerkId(req.auth!.clerkId);
       if (!user) {
         res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'Usuário não encontrado.' } });
         return;
@@ -165,15 +147,9 @@ export class TransactionController {
    * DELETE /api/v1/transactions/:id
    * Remove uma transação do usuário autenticado.
    */
-  static async remove(req: Request, res: Response): Promise<void> {
+  static async remove(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
-      if (!auth?.userId) {
-        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' } });
-        return;
-      }
-
-      const user = await ClientService.getByClerkId(auth.userId);
+      const user = await ClientService.getByClerkId(req.auth!.clerkId);
       if (!user) {
         res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'Usuário não encontrado.' } });
         return;
@@ -195,15 +171,9 @@ export class TransactionController {
    * GET /api/v1/transactions/summary
    * Retorna o resumo mensal (totais de receita, despesa e balanço).
    */
-  static async summary(req: Request, res: Response): Promise<void> {
+  static async summary(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
-      if (!auth?.userId) {
-        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' } });
-        return;
-      }
-
-      const user = await ClientService.getByClerkId(auth.userId);
+      const user = await ClientService.getByClerkId(req.auth!.clerkId);
       if (!user) {
         res.status(404).json({ error: { code: 'USER_NOT_FOUND', message: 'Usuário não encontrado.' } });
         return;

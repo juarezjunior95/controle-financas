@@ -5,120 +5,130 @@ import { useState, useEffect, useCallback } from "react";
 import { MonthSelector } from "@/components/dashboard/MonthSelector";
 import { EditBalanceModal } from "@/components/dashboard/EditBalanceModal";
 import { QuickTransactionModal } from "@/components/dashboard/QuickTransactionModal";
-import {
-  getInitialBalance,
-  setInitialBalance,
-  getTransactions,
-  addTransaction,
-  calculateTotals,
-  formatCurrency,
-  Transaction,
-  getCategories,
-  Category,
-} from "@/lib/storage";
+import { formatCurrency, getInitialBalance, setInitialBalance } from "@/lib/storage";
+import { fetchAPI } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+
+interface ApiTransaction {
+  id: string;
+  type: "income" | "expense";
+  amount: number;
+  description: string | null;
+  occurredOn: string;
+  category: {
+    id: string;
+    name: string;
+    color: string | null;
+    icon: string | null;
+  };
+}
+
+interface MonthlySummary {
+  month: number;
+  year: number;
+  income: number;
+  expense: number;
+  balance: number;
+  byCategory: Record<string, { income: number; expense: number }>;
+  transactionCount: number;
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Alimentação: "#b0c6ff",
+  Transporte: "#ffb59b",
+  Moradia: "#a1b4eb",
+  Saúde: "#ff8a80",
+  Lazer: "#b388ff",
+  Estudos: "#82b1ff",
+  "Estudos e trabalho": "#82b1ff",
+  Salário: "#69f0ae",
+  Freelance: "#ffd740",
+  Outros: "#90a4ae",
+};
 
 export default function DashboardPage() {
-  const [mounted, setMounted] = useState(false);
-  const [initialBalance, setInitialBalanceState] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  
-  // Mês/Ano selecionado
+  const { token } = useAuth();
+
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  
+
+  const [summary, setSummary] = useState<MonthlySummary | null>(null);
+  const [transactions, setTransactions] = useState<ApiTransaction[]>([]);
+  const [initialBalance, setInitialBalanceState] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
   // Modais
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
 
-  // Carregar dados do localStorage
+  // Saldo inicial ainda em localStorage (endpoint /users/me/settings ainda não implementado)
   useEffect(() => {
-    setMounted(true);
     setInitialBalanceState(getInitialBalance());
-    setTransactions(getTransactions());
-    setCategories(getCategories());
   }, []);
 
-  // Calcular totais do mês selecionado
-  const { income, expense, transactions: monthTransactions } = calculateTotals(
-    transactions,
-    selectedMonth,
-    selectedYear
-  );
+  const fetchDashboardData = useCallback(async () => {
+    if (!token) return;
+    setIsLoading(true);
 
-  // Saldo atual = Saldo inicial + todas receitas - todas despesas
-  const allTimeIncome = transactions
-    .filter(t => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const allTimeExpense = transactions
-    .filter(t => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const currentBalance = initialBalance + allTimeIncome - allTimeExpense;
+    const [summaryResult, transactionsResult] = await Promise.all([
+      fetchAPI<MonthlySummary>(
+        `/transactions/summary?month=${selectedMonth}&year=${selectedYear}`,
+        { token }
+      ),
+      fetchAPI<ApiTransaction[]>(
+        `/transactions?month=${selectedMonth}&year=${selectedYear}`,
+        { token }
+      ),
+    ]);
 
-  // Calcular gastos por categoria do mês
-  const expensesByCategory = monthTransactions
-    .filter(t => t.type === "expense")
-    .reduce((acc, t) => {
-      acc[t.categoryId] = (acc[t.categoryId] || 0) + t.amount;
-      return acc;
-    }, {} as Record<string, number>);
+    if (summaryResult.data) setSummary(summaryResult.data);
+    if (transactionsResult.data) setTransactions(transactionsResult.data);
 
-  const totalExpenseMonth = Object.values(expensesByCategory).reduce((a, b) => a + b, 0);
+    setIsLoading(false);
+  }, [token, selectedMonth, selectedYear]);
 
-  const categoryData = Object.entries(expensesByCategory)
-    .map(([catId, amount]) => {
-      const category = categories.find(c => c.id === catId);
-      return {
-        id: catId,
-        name: category?.name || "Outros",
-        color: category?.color || "#90a4ae",
-        amount,
-        percentage: totalExpenseMonth > 0 ? (amount / totalExpenseMonth) * 100 : 0,
-      };
-    })
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 4);
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
-  // Handlers
+  const income = summary?.income ?? 0;
+  const expense = summary?.expense ?? 0;
+  const currentBalance = initialBalance + income - expense;
+
+  // Gastos por categoria do mês (vem do summary da API)
+  const categoryData = summary
+    ? Object.entries(summary.byCategory)
+        .map(([name, values]) => ({
+          id: name,
+          name,
+          color: CATEGORY_COLORS[name] ?? "#90a4ae",
+          amount: values.expense,
+          percentage: expense > 0 ? (values.expense / expense) * 100 : 0,
+        }))
+        .filter((c) => c.amount > 0)
+        .sort((a, b) => b.amount - a.amount)
+        .slice(0, 4)
+    : [];
+
+  const totalExpenseMonth = expense;
+
   const handleSaveBalance = useCallback((value: number) => {
     setInitialBalance(value);
     setInitialBalanceState(value);
   }, []);
 
-  const handleAddTransaction = useCallback((data: {
-    type: "income" | "expense";
-    amount: number;
-    categoryId: string;
-    description: string;
-    date: string;
-  }) => {
-    const newTransaction = addTransaction(data);
-    setTransactions(prev => [...prev, newTransaction]);
-  }, []);
+  const handleTransactionSaved = useCallback(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const handleMonthChange = useCallback((month: number, year: number) => {
-    setSelectedMonth(month);
+    // MonthSelector usa índice 0-based; a API usa 1-based
+    setSelectedMonth(month + 1);
     setSelectedYear(year);
   }, []);
 
-  // Variação vs mês anterior (simplificado)
-  const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
-  const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
-  const { income: prevIncome, expense: prevExpense } = calculateTotals(
-    transactions,
-    prevMonth,
-    prevYear
-  );
-  
-  const incomeVariation = prevIncome > 0 
-    ? ((income - prevIncome) / prevIncome) * 100 
-    : income > 0 ? 100 : 0;
-  const expenseVariation = prevExpense > 0 
-    ? ((expense - prevExpense) / prevExpense) * 100 
-    : expense > 0 ? 100 : 0;
-
-  if (!mounted) {
+  if (isLoading && !summary) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <span className="material-symbols-outlined animate-spin text-4xl text-primary">
@@ -137,7 +147,7 @@ export default function DashboardPage() {
             Resumo Financeiro
           </h2>
           <MonthSelector
-            month={selectedMonth}
+            month={selectedMonth - 1}
             year={selectedYear}
             onChange={handleMonthChange}
           />
@@ -193,13 +203,9 @@ export default function DashboardPage() {
             <div className="p-3 bg-green-500/20 rounded-2xl text-green-400">
               <span className="material-symbols-outlined" translate="no">trending_up</span>
             </div>
-            {incomeVariation !== 0 && (
-              <span className={`text-[10px] font-bold tracking-widest ${
-                incomeVariation > 0 ? "text-green-400" : "text-red-400"
-              }`}>
-                {incomeVariation > 0 ? "+" : ""}{incomeVariation.toFixed(0)}% vs mês ant.
-              </span>
-            )}
+            <span className="text-[10px] font-bold tracking-widest text-green-400/60 uppercase">
+              Receitas
+            </span>
           </div>
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Receitas do Mês</p>
           <div className="flex items-baseline gap-1">
@@ -216,13 +222,9 @@ export default function DashboardPage() {
             <div className="p-3 bg-red-500/20 rounded-2xl text-red-400">
               <span className="material-symbols-outlined" translate="no">trending_down</span>
             </div>
-            {expenseVariation !== 0 && (
-              <span className={`text-[10px] font-bold tracking-widest ${
-                expenseVariation < 0 ? "text-green-400" : "text-red-400"
-              }`}>
-                {expenseVariation > 0 ? "+" : ""}{expenseVariation.toFixed(0)}% vs mês ant.
-              </span>
-            )}
+            <span className="text-[10px] font-bold tracking-widest text-red-400/60 uppercase">
+              Despesas
+            </span>
           </div>
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Despesas do Mês</p>
           <div className="flex items-baseline gap-1">
@@ -354,7 +356,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Últimas Transações */}
-      {monthTransactions.length > 0 && (
+      {transactions.length > 0 && (
         <div className="mt-8 bg-surface-container-low p-8 rounded-xl">
           <div className="flex justify-between items-center mb-6">
             <h4 className="font-dm-sans text-lg font-bold text-[#e5e2e1]">
@@ -366,8 +368,8 @@ export default function DashboardPage() {
           </div>
           
           <div className="space-y-3">
-            {monthTransactions.slice(-5).reverse().map((txn) => {
-              const category = categories.find(c => c.id === txn.categoryId);
+            {transactions.slice(0, 5).map((txn) => {
+              const catColor = txn.category.color ?? CATEGORY_COLORS[txn.category.name] ?? "#90a4ae";
               return (
                 <div
                   key={txn.id}
@@ -376,28 +378,28 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-4">
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: `${category?.color}20` }}
+                      style={{ backgroundColor: `${catColor}20` }}
                     >
                       <span
                         className="material-symbols-outlined"
-                        style={{ color: category?.color }}
+                        style={{ color: catColor }}
                       >
-                        {category?.icon || "receipt"}
+                        {txn.category.icon ?? "receipt"}
                       </span>
                     </div>
                     <div>
                       <p className="font-medium text-on-surface">
-                        {txn.description || category?.name || "Transação"}
+                        {txn.description || txn.category.name}
                       </p>
                       <p className="text-xs text-on-surface-variant">
-                        {new Date(txn.date).toLocaleDateString("pt-BR")}
+                        {new Date(txn.occurredOn).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
                   </div>
                   <span className={`font-bold ${
                     txn.type === "income" ? "text-green-400" : "text-red-400"
                   }`}>
-                    {txn.type === "income" ? "+" : "-"} {formatCurrency(txn.amount)}
+                    {txn.type === "income" ? "+" : "-"} {formatCurrency(Number(txn.amount))}
                   </span>
                 </div>
               );
@@ -417,7 +419,7 @@ export default function DashboardPage() {
       <QuickTransactionModal
         isOpen={showTransactionModal}
         onClose={() => setShowTransactionModal(false)}
-        onSave={handleAddTransaction}
+        onSave={handleTransactionSaved}
       />
 
       {/* FAB Mobile */}

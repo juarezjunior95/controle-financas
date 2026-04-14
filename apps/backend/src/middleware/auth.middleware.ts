@@ -1,35 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
-import { clerkMiddleware, getAuth } from '@clerk/express';
+import { clerkMiddleware } from '@clerk/express';
+import { verifyJwt, JwtPayload } from '../config/jwt';
 
 const isClerkConfigured = !!process.env.CLERK_SECRET_KEY;
 
+export interface AuthenticatedRequest extends Request {
+  auth?: JwtPayload;
+}
+
 /**
  * Middleware global do Clerk.
- * Se Clerk não estiver configurado, passa direto (permite health check).
+ * Mantido para compatibilidade com o SDK, mas a autenticação de rotas
+ * é feita via JWT próprio pelo requireAuthentication.
  */
-export const clerkAuth = isClerkConfigured 
+export const clerkAuth = isClerkConfigured
   ? clerkMiddleware()
   : (_req: Request, _res: Response, next: NextFunction) => next();
 
 /**
- * Middleware que exige autenticação.
- * Retorna 401 se o usuário não estiver autenticado.
- * Retorna 503 se Clerk não estiver configurado.
+ * Middleware que exige autenticação via JWT próprio.
+ * Extrai e valida o Bearer token do header Authorization.
  */
-export const requireAuthentication = (req: Request, res: Response, next: NextFunction): void => {
-  if (!isClerkConfigured) {
-    res.status(503).json({
-      error: {
-        code: 'AUTH_NOT_CONFIGURED',
-        message: 'Serviço de autenticação não configurado.',
-      },
-    });
-    return;
-  }
+export const requireAuthentication = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  const authHeader = req.headers.authorization;
 
-  const auth = getAuth(req);
-
-  if (!auth?.userId) {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({
       error: {
         code: 'UNAUTHORIZED',
@@ -39,5 +34,19 @@ export const requireAuthentication = (req: Request, res: Response, next: NextFun
     return;
   }
 
+  const token = authHeader.split(' ')[1];
+  const payload = verifyJwt(token);
+
+  if (!payload) {
+    res.status(401).json({
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Token inválido ou expirado.',
+      },
+    });
+    return;
+  }
+
+  req.auth = payload;
   next();
 };
