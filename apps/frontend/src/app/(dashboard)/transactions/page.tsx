@@ -18,7 +18,7 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,9 +32,15 @@ export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const loadTransactions = async () => {
+    if (!isLoaded || !isSignedIn) return;
+    
     try {
       setLoading(true);
       const token = await getToken();
+      
+      if (!token) {
+        throw new Error("Não foi possível obter o token de autenticação.");
+      }
       
       const params = new URLSearchParams({
         month: selectedMonth.toString(),
@@ -102,7 +108,7 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     loadTransactions();
-  }, [selectedMonth, selectedYear, selectedType]);
+  }, [selectedMonth, selectedYear, selectedType, isLoaded, isSignedIn]);
 
   // Formatação de Moeda
   const formatCurrency = (value: number | string) => {
