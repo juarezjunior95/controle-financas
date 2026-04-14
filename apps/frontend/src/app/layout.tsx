@@ -3,6 +3,8 @@ import { DM_Sans, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
 import { ClerkProvider } from "@clerk/nextjs";
+import { ptBR } from "@clerk/localizations";
+import { dark } from "@clerk/themes";
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const sourceSans = Source_Sans_3({ subsets: ["latin"], variable: "--font-source-sans" });
@@ -18,7 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      localization={ptBR}
+      appearance={{
+        baseTheme: dark,
+      }}
+    >
       <html lang="pt-BR">
         <head>
           <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
