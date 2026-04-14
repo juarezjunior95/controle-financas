@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { getAuth } from '@clerk/express';
 import { ClientService } from './client.service';
+import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
 export class ClientController {
   /**
@@ -9,16 +9,16 @@ export class ClientController {
    */
   static async getProfile(req: Request, res: Response): Promise<void> {
     try {
-      const auth = getAuth(req);
+      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
 
-      if (!auth?.userId) {
+      if (!clerkId) {
         res.status(401).json({
           error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' },
         });
         return;
       }
 
-      const cliente = await ClientService.getByClerkId(auth.userId);
+      const cliente = await ClientService.getByClerkId(clerkId);
 
       if (!cliente) {
         res.status(404).json({

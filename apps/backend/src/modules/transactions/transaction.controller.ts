@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { getAuth } from '@clerk/express';
 import { TransactionService } from './transaction.service';
+import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 
 export class TransactionController {
   /**
@@ -8,8 +8,7 @@ export class TransactionController {
    */
   static async create(req: Request, res: Response) {
     try {
-      const auth = getAuth(req);
-      const clerkId = auth.userId;
+      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
 
       if (!clerkId) {
         res.status(401).json({
@@ -75,8 +74,7 @@ export class TransactionController {
    */
   static async list(req: Request, res: Response) {
     try {
-      const auth = getAuth(req);
-      const clerkId = auth.userId;
+      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
 
       if (!clerkId) {
         res.status(401).json({ error: 'Não autorizado' });
@@ -102,12 +100,11 @@ export class TransactionController {
    */
   static async update(req: Request, res: Response) {
     try {
-      const auth = getAuth(req);
-      const clerkId = auth.userId;
+      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
       const { id } = req.params;
 
       if (!clerkId) {
-        res.status(401).json({ error: 'Nao autorizado' });
+        res.status(401).json({ error: 'Não autorizado' });
         return;
       }
 
@@ -123,12 +120,11 @@ export class TransactionController {
    */
   static async delete(req: Request, res: Response) {
     try {
-      const auth = getAuth(req);
-      const clerkId = auth.userId;
+      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
       const { id } = req.params;
 
       if (!clerkId) {
-        res.status(401).json({ error: 'Nao autorizado' });
+        res.status(401).json({ error: 'Não autorizado' });
         return;
       }
 

@@ -1,5 +1,6 @@
 import { clerk } from '../../config/clerk';
 import { ClientService } from '../clients/client.service';
+import { signJwt } from '../../config/jwt';
 
 interface SignUpInput {
   email: string;
@@ -44,10 +45,10 @@ export class AuthService {
         avatarUrl: clerkUser.imageUrl,
       });
 
-      // Gerar um signInToken para o frontend fazer a sessão
-      const signInToken = await clerkClient.signInTokens.createSignInToken({
-        userId: clerkUser.id,
-        expiresInSeconds: 60 * 60 * 24, // 24 horas
+      // Gerar um JWT próprio para o frontend
+      const token = signJwt({ 
+        clerkId: clerkUser.id,
+        email: input.email 
       });
 
       return {
@@ -58,7 +59,7 @@ export class AuthService {
           displayName: user.displayName,
           avatarUrl: user.avatarUrl,
         },
-        token: signInToken.token,
+        token,
       };
     } catch (error: any) {
       console.error('[AuthService] Erro no registro:', JSON.stringify(error, null, 2));
@@ -115,10 +116,10 @@ export class AuthService {
       // Sincronizar com banco de dados local (post-auth sync)
       const user = await ClientService.syncFromClerk(clerkUser.id);
 
-      // Gerar um signInToken para o frontend
-      const signInToken = await clerkClient.signInTokens.createSignInToken({
-        userId: clerkUser.id,
-        expiresInSeconds: 60 * 60 * 24, // 24 horas
+      // Gerar um JWT próprio para o frontend
+      const token = signJwt({ 
+        clerkId: clerkUser.id,
+        email: input.email 
       });
 
       return {
@@ -129,7 +130,7 @@ export class AuthService {
           displayName: user.displayName,
           avatarUrl: user.avatarUrl,
         },
-        token: signInToken.token,
+        token,
       };
     } catch (error: any) {
       console.error('[AuthService] Erro no login:', JSON.stringify(error, null, 2));
