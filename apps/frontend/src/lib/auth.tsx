@@ -50,7 +50,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     refreshToken();
-    // Refresh periódico opcional ou baseado em visibilidade
+    
+    // Atualiza o token a cada 30 segundos usando o getToken do Clerk,
+    // que fará o refresh automático caso esteja expirando
+    const intervalId = setInterval(refreshToken, 30000);
+    
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshToken();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [userId, getToken]);
 
   // Sincronizar Usuário do Clerk para o formato interno
