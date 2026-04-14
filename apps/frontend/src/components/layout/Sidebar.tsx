@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
+import { useAuth } from "@/lib/auth";
 
 const MENU_ITEMS = [
   { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
@@ -13,6 +13,7 @@ const MENU_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <aside className="h-screen w-64 hidden md:flex flex-col bg-[#1c1b1b] py-8 space-y-2 shadow-[24px_0_48px_rgba(0,0,0,0.4)] z-50 shrink-0">
@@ -58,13 +59,13 @@ export function Sidebar() {
             <span className="material-symbols-outlined">help</span>
             <span className="font-source-sans-3 text-sm">Help</span>
           </Link>
-          <Link
-            href="/login"
-            className="text-[#c3c6d6] py-2 flex items-center space-x-3 hover:text-[#error] transition-colors"
+          <button
+            onClick={() => logout()}
+            className="w-full text-[#c3c6d6] py-2 flex items-center space-x-3 hover:text-error transition-colors"
           >
             <span className="material-symbols-outlined">logout</span>
             <span className="font-source-sans-3 text-sm">Sign Out</span>
-          </Link>
+          </button>
         </div>
       </div>
     </aside>

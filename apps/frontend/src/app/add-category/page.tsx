@@ -11,8 +11,8 @@ export default function AddCategoryPage() {
   const [categoryName, setCategoryName] = useState("");
 
   const icons = [
-    "shopping_bag", "directions_car", "home", "medical_services", 
-    "sports_esports", "restaurant", "flight", "fitness_center", 
+    "shopping_bag", "directions_car", "home", "medical_services",
+    "sports_esports", "restaurant", "flight", "fitness_center",
     "school", "payments", "pets", "more_horiz"
   ];
 
@@ -23,7 +23,7 @@ export default function AddCategoryPage() {
         <div className="flex justify-between items-center px-8 h-20 w-full max-w-7xl mx-auto">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <button 
+              <button
                 onClick={() => router.back()}
                 className="flex items-center justify-center w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-high transition-colors text-on-surface/60"
               >
@@ -35,9 +35,9 @@ export default function AddCategoryPage() {
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center bg-surface-container px-4 py-2 rounded-full text-on-surface/60 focus-within:text-primary transition-colors border border-outline-variant/10">
               <span className="material-symbols-outlined text-xl">search</span>
-              <input 
-                className="bg-transparent border-none focus:ring-0 text-sm w-48 font-body ml-2" 
-                placeholder="Search data..." 
+              <input
+                className="bg-transparent border-none focus:ring-0 text-sm w-48 font-body ml-2"
+                placeholder="Search data..."
                 type="text"
               />
             </div>
@@ -65,9 +65,9 @@ export default function AddCategoryPage() {
               <section className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Identificação</label>
-                  <input 
-                    className="w-full bg-surface-container border border-outline-variant/10 rounded-xl h-14 px-5 text-on-surface placeholder:text-on-surface/30 focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-body text-lg outline-none" 
-                    placeholder="Ex: Assinaturas Digitais" 
+                  <input
+                    className="w-full bg-surface-container border border-outline-variant/10 rounded-xl h-14 px-5 text-on-surface placeholder:text-on-surface/30 focus:ring-2 focus:ring-primary focus:border-transparent transition-all font-body text-lg outline-none"
+                    placeholder="Ex: Assinaturas Digitais"
                     type="text"
                     value={categoryName}
                     onChange={(e) => setCategoryName(e.target.value)}
@@ -82,14 +82,13 @@ export default function AddCategoryPage() {
                   <div className="grid grid-cols-6 gap-3 p-4 bg-surface-container-low rounded-xl border border-outline-variant/10">
                     {/* Icon Grid */}
                     {icons.map((icon) => (
-                      <button 
+                      <button
                         key={icon}
                         onClick={() => setSelectedIcon(icon)}
-                        className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 ${
-                          selectedIcon === icon 
-                            ? "bg-surface-container-highest text-primary ring-2 ring-primary" 
+                        className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 ${selectedIcon === icon
+                            ? "bg-surface-container-highest text-primary ring-2 ring-primary"
                             : "hover:bg-surface-container-high text-on-surface/60"
-                        }`}
+                          }`}
                       >
                         <span className="material-symbols-outlined">{icon}</span>
                       </button>
@@ -118,10 +117,9 @@ export default function AddCategoryPage() {
                 <div className="space-y-4">
                   <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Fluxo de Caixa</label>
                   <div className="grid grid-cols-1 gap-3">
-                    <label 
-                      className={`flex items-center justify-between p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container transition-all border ${
-                        selectedFlow === 'expense' ? 'border-primary/30 ring-1 ring-primary/30' : 'border-outline-variant/10'
-                      }`}
+                    <label
+                      className={`flex items-center justify-between p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container transition-all border ${selectedFlow === 'expense' ? 'border-primary/30 ring-1 ring-primary/30' : 'border-outline-variant/10'
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-error/10 text-error flex items-center justify-center">
@@ -129,9 +127,9 @@ export default function AddCategoryPage() {
                         </div>
                         <span className="font-headline font-semibold">Apenas Despesa</span>
                       </div>
-                      <input 
-                        className="hidden" 
-                        name="flow" 
+                      <input
+                        className="hidden"
+                        name="flow"
                         type="radio"
                         checked={selectedFlow === 'expense'}
                         onChange={() => setSelectedFlow('expense')}
@@ -141,10 +139,9 @@ export default function AddCategoryPage() {
                       </div>
                     </label>
 
-                    <label 
-                      className={`flex items-center justify-between p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container transition-all border ${
-                        selectedFlow === 'income' ? 'border-primary/30 ring-1 ring-primary/30' : 'border-outline-variant/10'
-                      }`}
+                    <label
+                      className={`flex items-center justify-between p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container transition-all border ${selectedFlow === 'income' ? 'border-primary/30 ring-1 ring-primary/30' : 'border-outline-variant/10'
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
@@ -152,9 +149,9 @@ export default function AddCategoryPage() {
                         </div>
                         <span className="font-headline font-semibold">Apenas Receita</span>
                       </div>
-                      <input 
-                        className="hidden" 
-                        name="flow" 
+                      <input
+                        className="hidden"
+                        name="flow"
                         type="radio"
                         checked={selectedFlow === 'income'}
                         onChange={() => setSelectedFlow('income')}
@@ -164,10 +161,9 @@ export default function AddCategoryPage() {
                       </div>
                     </label>
 
-                    <label 
-                      className={`flex items-center justify-between p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container transition-all border ${
-                        selectedFlow === 'both' ? 'border-primary/30 ring-1 ring-primary/30' : 'border-outline-variant/10'
-                      }`}
+                    <label
+                      className={`flex items-center justify-between p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container transition-all border ${selectedFlow === 'both' ? 'border-primary/30 ring-1 ring-primary/30' : 'border-outline-variant/10'
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg bg-tertiary/10 text-tertiary flex items-center justify-center">
@@ -175,9 +171,9 @@ export default function AddCategoryPage() {
                         </div>
                         <span className="font-headline font-semibold">Ambos</span>
                       </div>
-                      <input 
-                        className="hidden" 
-                        name="flow" 
+                      <input
+                        className="hidden"
+                        name="flow"
                         type="radio"
                         checked={selectedFlow === 'both'}
                         onChange={() => setSelectedFlow('both')}
@@ -215,7 +211,7 @@ export default function AddCategoryPage() {
 
           {/* Action Bar */}
           <footer className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-end gap-4">
-            <button 
+            <button
               onClick={() => router.back()}
               className="w-full sm:w-auto px-10 h-14 rounded-full font-headline font-bold text-on-surface/60 hover:text-on-surface hover:bg-surface-container transition-all active:scale-95"
             >

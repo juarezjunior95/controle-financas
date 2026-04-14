@@ -4,45 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { SignIn, SignUp } from "@clerk/nextjs";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, register, isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading } = useAuth();
 
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-    setIsSubmitting(true);
-
-    try {
-      let result;
-
-      if (isLoginMode) {
-        result = await login(email, password);
-      } else {
-        result = await register(email, password, firstName, lastName);
-      }
-
-      if (result.success) {
-        router.push("/dashboard");
-      } else {
-        setErrorMessage(result.error || "Ocorreu um erro. Tente novamente.");
-      }
-    } catch {
-      setErrorMessage("Erro de conexão com o servidor.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   return (
     <div className="font-body text-on-surface min-h-[100dvh] flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
@@ -126,97 +95,50 @@ export default function LoginPage() {
               </div>
             )}
             
-            {/* Auth Form */}
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              {/* Name fields — only in register mode */}
-              {!isLoginMode && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Nome</label>
-                    <input
-                      className="w-full bg-surface-container-highest border-none rounded-xl py-4 px-4 text-on-surface focus:ring-2 focus:ring-primary transition-all placeholder:text-outline/50"
-                      placeholder="João"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">Sobrenome</label>
-                    <input
-                      className="w-full bg-surface-container-highest border-none rounded-xl py-4 px-4 text-on-surface focus:ring-2 focus:ring-primary transition-all placeholder:text-outline/50"
-                      placeholder="Silva"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
-                  </div>
-                </div>
+            {/* Auth Form — Clerk Integration */}
+            <div className="w-full clerk-theme-provider">
+              {isLoginMode ? (
+                <SignIn 
+                  appearance={{
+                    elements: {
+                      rootBox: "w-full",
+                      card: "bg-transparent shadow-none border-none p-0",
+                      headerTitle: "hidden",
+                      headerSubtitle: "hidden",
+                      socialButtonsBlockButton: "bg-surface-container-highest border-none text-on-surface hover:bg-surface-container-high transition-all rounded-xl py-3",
+                      formButtonPrimary: "bg-gradient-to-br from-[#b0c6ff] to-[#0058cb] hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-full py-4 text-sm font-bold",
+                      formFieldInput: "bg-surface-container-highest border-none rounded-xl py-4 text-on-surface",
+                      footerAction: "hidden",
+                      dividerRow: "hidden",
+                      formFieldLabel: "text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1 mb-1",
+                      identityPreviewText: "text-on-surface",
+                      identityPreviewEditButton: "text-primary"
+                    }
+                  }}
+                  routing="hash"
+                  afterSignInUrl="/dashboard"
+                />
+              ) : (
+                <SignUp 
+                  appearance={{
+                    elements: {
+                      rootBox: "w-full",
+                      card: "bg-transparent shadow-none border-none p-0",
+                      headerTitle: "hidden",
+                      headerSubtitle: "hidden",
+                      socialButtonsBlockButton: "bg-surface-container-highest border-none text-on-surface hover:bg-surface-container-high transition-all rounded-xl py-3",
+                      formButtonPrimary: "bg-gradient-to-br from-[#b0c6ff] to-[#0058cb] hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-full py-4 text-sm font-bold",
+                      formFieldInput: "bg-surface-container-highest border-none rounded-xl py-4 text-on-surface",
+                      footerAction: "hidden",
+                      dividerRow: "hidden",
+                      formFieldLabel: "text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1 mb-1"
+                    }
+                  }}
+                  routing="hash"
+                  afterSignUpUrl="/dashboard"
+                />
               )}
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider ml-1">E-mail</label>
-                <div className="relative group">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors" translate="no">mail</span>
-                  <input
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface focus:ring-2 focus:ring-primary transition-all placeholder:text-outline/50"
-                    placeholder="nome@exemplo.com"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center px-1">
-                  <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Senha</label>
-                  {isLoginMode && (
-                    <Link href="/forgot-password" className="text-xs font-medium text-primary hover:text-on-primary-container transition-colors">Esqueceu a senha?</Link>
-                  )}
-                </div>
-                <div className="relative group">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors" translate="no">key</span>
-                  <input
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-12 text-on-surface focus:ring-2 focus:ring-primary transition-all placeholder:text-outline/50"
-                    placeholder="••••••••"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    minLength={8}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  <button
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface"
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    <span className="material-symbols-outlined text-sm" translate="no">
-                      {showPassword ? "visibility_off" : "visibility"}
-                    </span>
-                  </button>
-                </div>
-              </div>
-              
-              <button
-                className="w-full bg-gradient-to-br from-[#b0c6ff] to-[#0058cb] text-on-primary font-bold py-4 rounded-full shadow-lg hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                type="submit"
-                disabled={isSubmitting || authLoading}
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="material-symbols-outlined text-sm animate-spin" translate="no">progress_activity</span>
-                    {isLoginMode ? "Entrando..." : "Criando conta..."}
-                  </>
-                ) : (
-                  <>
-                    {isLoginMode ? "Entrar na Vault" : "Criar minha conta"}
-                    <span className="material-symbols-outlined text-sm" translate="no">arrow_forward</span>
-                  </>
-                )}
-              </button>
-            </form>
+            </div>
             
             <p className="text-center text-on-surface-variant text-xs mt-10">
               Ao continuar, você concorda com nossos <br />

@@ -100,14 +100,12 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   });
 });
 
-// ─── Iniciar servidor (apenas em ambiente local) ────────────────────────────
-if (process.env.NODE_ENV !== 'production') {
-  const port = process.env.PORT || 3333;
-  app.listen(port, () => {
-    console.log(`[Backend] Server is running on port ${port}`);
-    console.log(`[Backend] API: http://localhost:${port}/api/v1`);
-  });
-}
+// ─── Iniciar servidor ───────────────────────────────────────────────────────
+const port = process.env.PORT || 3333;
+app.listen(port, () => {
+  console.log(`[Backend] Server is running on port ${port}`);
+  console.log(`[Backend] API: http://localhost:${port}/api/v1`);
+});
 
 // Exporta o app para Vercel Serverless Functions
 export default app;

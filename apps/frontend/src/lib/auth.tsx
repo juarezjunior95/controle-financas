@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { fetchAPI } from "./api";
+import { useAuth as useClerkAuth, useUser as useClerkUser } from "@clerk/nextjs";
 
 interface User {
   id: string;
@@ -17,127 +17,76 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const TOKEN_KEY = "vault_auth_token";
-
 /**
- * Provider de autenticação.
- * Gerencia estado do usuário e token via backend API (sem dependência do Clerk no frontend).
+ * Provider de autenticação que integra com o Clerk.
+ * Serve como ponte para que o resto da app continue usando useAuth() de forma transparente.
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const { isLoaded: authLoaded, userId, getToken, signOut } = useClerkAuth();
+  const { isLoaded: userLoaded, user: clerkUser } = useClerkUser();
+  
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [internalUser, setInternalUser] = useState<User | null>(null);
 
-  /**
-   * Salva o token no localStorage e no state.
-   */
-  const saveToken = useCallback((newToken: string) => {
-    localStorage.setItem(TOKEN_KEY, newToken);
-    setToken(newToken);
-  }, []);
-
-  /**
-   * Remove o token e limpa o estado.
-   */
-  const clearAuth = useCallback(() => {
-    localStorage.removeItem(TOKEN_KEY);
-    setToken(null);
-    setUser(null);
-  }, []);
-
-  /**
-   * Busca os dados do usuário autenticado no backend.
-   */
-  const fetchUser = useCallback(async (authToken: string) => {
-    const { data, error } = await fetchAPI<User>("/auth/me", { token: authToken });
-
-    if (error) {
-      console.warn("[Auth] Token inválido ou expirado:", error.message);
-      clearAuth();
-      return null;
-    }
-
-    setUser(data!);
-    return data;
-  }, [clearAuth]);
-
-  /**
-   * Restaura a sessão ao carregar a página (se houver token salvo).
-   */
+  // Sincronizar Token do Clerk
   useEffect(() => {
-    const storedToken = localStorage.getItem(TOKEN_KEY);
-    if (storedToken) {
-      setToken(storedToken);
-      fetchUser(storedToken).finally(() => setIsLoading(false));
+    const refreshToken = async () => {
+      if (userId) {
+        try {
+          const t = await getToken();
+          setToken(t);
+        } catch (e) {
+          console.error("[Auth] Erro ao obter token do Clerk:", e);
+          setToken(null);
+        }
+      } else {
+        setToken(null);
+      }
+    };
+
+    refreshToken();
+    // Refresh periódico opcional ou baseado em visibilidade
+  }, [userId, getToken]);
+
+  // Sincronizar Usuário do Clerk para o formato interno
+  useEffect(() => {
+    if (clerkUser) {
+      setInternalUser({
+        id: clerkUser.id, // Em alguns casos usamos o clerkId como id local
+        clerkId: clerkUser.id,
+        email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        nome: clerkUser.firstName,
+        sobrenome: clerkUser.lastName,
+        avatarUrl: clerkUser.imageUrl,
+      });
     } else {
-      setIsLoading(false);
+      setInternalUser(null);
     }
-  }, [fetchUser]);
+  }, [clerkUser]);
 
-  /**
-   * Login via backend API.
-   */
-  const login = useCallback(async (email: string, password: string) => {
-    const { data, error } = await fetchAPI<{ user: User; token: string }>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
+  const logout = useCallback(async () => {
+    await signOut();
+    setToken(null);
+    setInternalUser(null);
+  }, [signOut]);
 
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    saveToken(data!.token);
-    setUser(data!.user);
-    return { success: true };
-  }, [saveToken]);
-
-  /**
-   * Registro via backend API.
-   */
-  const register = useCallback(async (
-    email: string,
-    password: string,
-    firstName?: string,
-    lastName?: string,
-  ) => {
-    const { data, error } = await fetchAPI<{ user: User; token: string }>("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({ email, password, firstName, lastName }),
-    });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    saveToken(data!.token);
-    setUser(data!.user);
-    return { success: true };
-  }, [saveToken]);
-
-  /**
-   * Logout — limpa dados locais.
-   */
-  const logout = useCallback(() => {
-    clearAuth();
-  }, [clearAuth]);
+  // Só consideramos carregado quando:
+  // 1. Clerk auth está carregado
+  // 2. Se há um userId, o perfil do usuário E o token devem estar carregados
+  const isLoading = Boolean(!authLoaded || (!!userId && (!userLoaded || !token)));
 
   return (
     <AuthContext.Provider
       value={{
-        user,
+        user: internalUser,
         token,
         isLoading,
-        isAuthenticated: !!user && !!token,
-        login,
-        register,
+        isAuthenticated: !!userId && !!token,
         logout,
       }}
     >
@@ -147,7 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Hook para acessar o contexto de autenticação.
+ * Hook para acessar o contexto de autenticação customizado (agora via Clerk).
  */
 export function useAuth() {
   const context = useContext(AuthContext);

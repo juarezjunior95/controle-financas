@@ -66,9 +66,9 @@ export class TransactionService {
   /**
    * Lista transações de um usuário com filtros opcionais.
    */
-  static async listByUser(clerkId: string, filters?: { month?: number; year?: number; type?: 'income' | 'expense' }) {
+  static async listByUser(userId: string, filters?: { month?: number; year?: number; type?: 'income' | 'expense' }) {
     const user = await prisma.user.findUnique({
-      where: { clerkId },
+      where: { clerkId: userId },
     });
 
     if (!user) return [];
@@ -99,9 +99,9 @@ export class TransactionService {
   /**
    * Atualiza uma transação existente.
    */
-  static async update(clerkId: string, id: string, data: Partial<CreateTransactionDto>) {
+  static async update(userId: string, id: string, data: Partial<CreateTransactionDto>) {
     // 1. Verificar se o usuário existe
-    const user = await prisma.user.findUnique({ where: { clerkId } });
+    const user = await prisma.user.findUnique({ where: { clerkId: userId } });
     if (!user) throw new Error('Usuário não sincronizado.');
 
     // 2. Se a categoria mudar, fazer o upsert dela
@@ -123,11 +123,13 @@ export class TransactionService {
       categoryId = category.id;
     }
 
-    // 3. Atualizar a transação garantindo que pertence ao usuário
-    return await prisma.transaction.update({
+    // 3. Atualizar a transação
+    // Usamos updateMany para garantir que a transação pertence ao usuário (id + userId)
+    // já que o Prisma 'update' só aceita campos únicos no 'where'.
+    const result = await prisma.transaction.updateMany({
       where: {
         id,
-        userId: user.id, // Segurança: só deleta se for do dono
+        userId: user.id,
       },
       data: {
         type: data.type,
@@ -136,6 +138,15 @@ export class TransactionService {
         occurredOn: data.date ? new Date(data.date) : undefined,
         categoryId: categoryId,
       },
+    });
+
+    if (result.count === 0) {
+      throw new Error('Transação não encontrada ou permissão negada.');
+    }
+
+    // Retornamos a transação atualizada
+    return await prisma.transaction.findUnique({
+      where: { id },
       include: { category: true },
     });
   }
@@ -143,15 +154,21 @@ export class TransactionService {
   /**
    * Remove uma transação.
    */
-  static async delete(clerkId: string, id: string) {
-    const user = await prisma.user.findUnique({ where: { clerkId } });
+  static async delete(userId: string, id: string) {
+    const user = await prisma.user.findUnique({ where: { clerkId: userId } });
     if (!user) throw new Error('Usuário não sincronizado.');
 
-    return await prisma.transaction.delete({
+    const result = await prisma.transaction.deleteMany({
       where: {
         id,
-        userId: user.id, // Segurança: só deleta se for do dono
+        userId: user.id,
       },
     });
+
+    if (result.count === 0) {
+      throw new Error('Transação não encontrada ou permissão negada.');
+    }
+
+    return { id };
   }
 }

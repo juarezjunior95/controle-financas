@@ -89,13 +89,18 @@ export default function DashboardPage() {
   const handleAddTransaction = useCallback((data: {
     type: "income" | "expense";
     amount: number;
-    categoryId: string;
+    category: string;
     description: string;
     date: string;
   }) => {
-    const newTransaction = addTransaction(data);
+    // Para o storage local, mapeamos o nome da categoria para um ID
+    const cat = categories.find(c => c.name === data.category);
+    const storageData = { ...data, categoryId: cat?.id || "cat-9" };
+    
+    // @ts-ignore - Adaptando p/ o storage local temporário
+    const newTransaction = addTransaction(storageData);
     setTransactions(prev => [...prev, newTransaction]);
-  }, []);
+  }, [categories]);
 
   const handleMonthChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);

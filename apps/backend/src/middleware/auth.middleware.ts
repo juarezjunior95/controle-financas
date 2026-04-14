@@ -1,53 +1,38 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyJwt, JwtPayload } from '../config/jwt';
+import { clerkMiddleware, getAuth } from '@clerk/express';
 
 /**
- * Interface estendida do Request do Express para incluir os dados de autenticação.
+ * Interface estendida do Request para incluir os dados do Clerk.
  */
 export interface AuthenticatedRequest extends Request {
-  auth: JwtPayload;
+  auth: ReturnType<typeof getAuth>;
 }
 
 /**
- * Middleware que exige autenticação via JWT customizado.
- * Retorna 401 se o token não for fornecido, for inválido ou estiver expirado.
+ * Middleware que exige autenticação via Clerk.
+ * Retorna 401 se o usuário não estiver autenticado.
  */
 export const requireAuthentication = (req: Request, res: Response, next: NextFunction): void => {
-  const authHeader = req.headers.authorization;
+  const auth = getAuth(req);
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!auth.userId) {
     res.status(401).json({
       success: false,
       error: {
         code: 'UNAUTHORIZED',
-        message: 'Autenticação é obrigatória para acessar este recurso.',
+        message: 'Autenticação é obrigatória para acessar este recurso (Clerk).',
       },
     });
     return;
   }
 
-  const token = authHeader.split(' ')[1];
-  const payload = verifyJwt(token);
+  // Anexa o objeto de autenticação ao request para uso nos controllers
+  (req as AuthenticatedRequest).auth = auth;
 
-  if (!payload) {
-    res.status(401).json({
-      success: false,
-      error: {
-        code: 'UNAUTHORIZED',
-        message: 'Token inválido ou expirado. Por favor, faça login novamente.',
-      },
-    });
-    return;
-  }
-
-  // Adiciona o payload do JWT ao request para uso nos controllers
-  (req as AuthenticatedRequest).auth = payload;
-  
   next();
 };
 
 /**
- * Middleware placeholder para manter compatibilidade com o index.ts se necessário.
- * Não utiliza mais o Clerk diretamente.
+ * Middleware global do Clerk que injeta o estado de autenticação no Request.
  */
-export const clerkAuth = (_req: Request, _res: Response, next: NextFunction) => next();
+export const clerkAuth = clerkMiddleware();

@@ -8,8 +8,8 @@ export default function NewGoalPage() {
     <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-12 bg-background">
       {/* Top Navigation Action */}
       <div className="mb-10">
-        <Link 
-          href="/goals" 
+        <Link
+          href="/goals"
           className="flex items-center gap-2 text-on-surface/60 hover:text-primary transition-colors font-headline font-medium group"
         >
           <span className="material-symbols-outlined text-xl group-hover:-translate-x-1 transition-transform">
@@ -37,10 +37,10 @@ export default function NewGoalPage() {
               <label className="text-[10px] uppercase tracking-widest font-bold text-primary px-1">
                 Nome da Meta
               </label>
-              <input 
-                className="bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-2 focus:ring-primary/50 placeholder:text-on-surface/30 font-headline font-medium transition-all outline-none" 
-                placeholder="Ex: Reserva de Emergência" 
-                type="text" 
+              <input
+                className="bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-2 focus:ring-primary/50 placeholder:text-on-surface/30 font-headline font-medium transition-all outline-none"
+                placeholder="Ex: Reserva de Emergência"
+                type="text"
               />
             </div>
 
@@ -52,10 +52,10 @@ export default function NewGoalPage() {
                 </label>
                 <div className="relative">
                   <span className="absolute left-5 top-1/2 -translate-y-1/2 text-on-surface/40 font-headline font-bold">R$</span>
-                  <input 
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-5 text-on-surface focus:ring-2 focus:ring-primary/50 placeholder:text-on-surface/30 font-headline font-bold text-xl transition-all outline-none" 
-                    placeholder="0,00" 
-                    type="text" 
+                  <input
+                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-5 text-on-surface focus:ring-2 focus:ring-primary/50 placeholder:text-on-surface/30 font-headline font-bold text-xl transition-all outline-none"
+                    placeholder="0,00"
+                    type="text"
                   />
                 </div>
               </div>
@@ -66,9 +66,9 @@ export default function NewGoalPage() {
                   Data Limite
                 </label>
                 <div className="relative">
-                  <input 
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-2 focus:ring-primary/50 font-headline font-medium transition-all [color-scheme:dark] outline-none" 
-                    type="date" 
+                  <input
+                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-2 focus:ring-primary/50 font-headline font-medium transition-all [color-scheme:dark] outline-none"
+                    type="date"
                   />
                   <span className="material-symbols-outlined absolute right-5 top-1/2 -translate-y-1/2 text-on-surface/40 pointer-events-none">
                     calendar_today
@@ -125,8 +125,8 @@ export default function NewGoalPage() {
             <button className="flex-1 md:flex-none bg-primary-container text-on-primary-container px-12 py-4 rounded-full font-headline font-bold text-lg hover:brightness-110 active:scale-95 transition-all shadow-[0_8px_30px_rgb(0,88,203,0.3)]">
               Criar Meta
             </button>
-            <Link 
-              href="/goals" 
+            <Link
+              href="/goals"
               className="text-on-surface/60 hover:text-on-surface px-8 py-4 rounded-full font-headline font-bold transition-all"
             >
               Cancelar

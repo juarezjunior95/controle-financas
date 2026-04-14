@@ -10,7 +10,7 @@ interface TransactionModalProps {
   onSave: (transaction: {
     type: "income" | "expense";
     amount: number;
-    categoryId: string;
+    category: string;
     description: string;
     date: string;
   }) => void;
@@ -74,10 +74,12 @@ export function TransactionModal({
       return;
     }
 
+    const selectedCategory = categories.find(c => c.id === categoryId);
+    
     onSave({
       type,
       amount: numericAmount,
-      categoryId,
+      category: selectedCategory ? selectedCategory.name : "Outros",
       description,
       date,
     });

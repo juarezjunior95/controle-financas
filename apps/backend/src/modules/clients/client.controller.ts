@@ -9,16 +9,16 @@ export class ClientController {
    */
   static async getProfile(req: Request, res: Response): Promise<void> {
     try {
-      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
+      const userId = (req as AuthenticatedRequest).auth?.userId;
 
-      if (!clerkId) {
+      if (!userId) {
         res.status(401).json({
           error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' },
         });
         return;
       }
 
-      const cliente = await ClientService.getByClerkId(clerkId);
+      const cliente = await ClientService.getByClerkId(userId);
 
       if (!cliente) {
         res.status(404).json({
