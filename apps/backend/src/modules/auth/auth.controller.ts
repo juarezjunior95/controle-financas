@@ -82,9 +82,9 @@ export class AuthController {
    */
   static async me(req: Request, res: Response): Promise<void> {
     try {
-      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
+      const userId = (req as AuthenticatedRequest).auth?.userId;
 
-      if (!clerkId) {
+      if (!userId) {
         res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
@@ -94,7 +94,7 @@ export class AuthController {
         return;
       }
 
-      const user = await AuthService.getMe(clerkId);
+      const user = await AuthService.getMe(userId);
 
       res.json({ data: user });
     } catch (error: any) {

@@ -3,32 +3,35 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
 
 export default function NewTransactionPage() {
   const router = useRouter();
-  const { getToken } = useAuth();
-  
+  const { token, isAuthenticated, isLoading: authLoading } = useAuth();
+
   // Estados do formulário
   const [type, setType] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [category, setCategory] = useState("Alimentação");
   const [description, setDescription] = useState("");
-  
+
   // Estado de UI
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated || !token) {
+      setError("Você precisa estar logado para realizar esta ação.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const token = await getToken();
-      
       // Limpar o valor (remover R$, etc se necessário, mas aqui é simples)
       const numericAmount = parseFloat(amount.replace(',', '.'));
 
@@ -53,7 +56,7 @@ export default function NewTransactionPage() {
       }
 
       // Sucesso! Voltar para a página anterior ou dashboard
-      router.push("/dashboard");
+      router.push("/transactions"); // Redireciona para a lista para ver o novo item
       router.refresh();
     } catch (err: any) {
       console.error("[NewTransaction] Erro ao salvar:", err);
@@ -71,15 +74,15 @@ export default function NewTransactionPage() {
 
       {/* Modal Container */}
       <div className="w-full max-w-2xl bg-surface-container-low rounded-xl overflow-hidden shadow-[0_24px_48px_rgba(0,0,0,0.4)] flex flex-col md:flex-row min-h-[600px]">
-        
+
         {/* Left Visual Anchor */}
         <div className="hidden md:flex md:w-1/3 bg-gradient-to-br from-primary-container to-surface-container-highest p-8 flex-col justify-between relative overflow-hidden">
-          <div 
-            className="absolute inset-0 opacity-20" 
-            style={{ 
-              backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCz60aeQXOGgNfAT_i87PPE7bsBSd8oiTC5xhsuHK-OuWYS1cB6SutLkn3p0bkjAEDqIWIqTstvLVNqcGeQ3av8a2Zcyo2hb6jEISDkWTm3A8buWkqhtAtsIho__sDbNDGPAteVlwt188fvJ_2qPgdKEIrihr7Y7eirSAMeBdLAnw1mCQpo_fPZzCAC7MosqoEjpl4eb_0cOgjAGoyqWjyBXnBSMA98CgbTO5bhjA1Rq9btOvr9o05U_JIzf6bk0fcG5Vu0DO_YWXg')", 
-              backgroundSize: 'cover', 
-              backgroundPosition: 'center' 
+          <div
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCz60aeQXOGgNfAT_i87PPE7bsBSd8oiTC5xhsuHK-OuWYS1cB6SutLkn3p0bkjAEDqIWIqTstvLVNqcGeQ3av8a2Zcyo2hb6jEISDkWTm3A8buWkqhtAtsIho__sDbNDGPAteVlwt188fvJ_2qPgdKEIrihr7Y7eirSAMeBdLAnw1mCQpo_fPZzCAC7MosqoEjpl4eb_0cOgjAGoyqWjyBXnBSMA98CgbTO5bhjA1Rq9btOvr9o05U_JIzf6bk0fcG5Vu0DO_YWXg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
             }}
           ></div>
           <div className="relative z-10">
@@ -100,7 +103,7 @@ export default function NewTransactionPage() {
           {/* Mobile Header */}
           <div className="flex md:hidden items-center justify-between mb-8">
             <h1 className="font-headline text-xl font-bold text-on-surface tracking-tight">Novo Lançamento</h1>
-            <button 
+            <button
               onClick={() => router.back()}
               className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-highest text-on-surface"
             >
@@ -111,7 +114,7 @@ export default function NewTransactionPage() {
           <form className="space-y-8 flex-1" onSubmit={handleSubmit}>
             {/* Toggle: Income / Expense */}
             <div className="flex p-1 bg-surface-container-highest rounded-full w-full max-w-xs mx-auto md:mx-0">
-              <button 
+              <button
                 type="button"
                 disabled={loading}
                 onClick={() => setType("expense")}
@@ -119,7 +122,7 @@ export default function NewTransactionPage() {
               >
                 Despesa
               </button>
-              <button 
+              <button
                 type="button"
                 disabled={loading}
                 onClick={() => setType("income")}
@@ -134,9 +137,9 @@ export default function NewTransactionPage() {
               <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2 ml-1">Valor da Transação</label>
               <div className="relative flex items-baseline">
                 <span className="text-2xl font-headline font-light text-primary mr-2">R$</span>
-                <input 
-                  className="bg-transparent border-none p-0 text-5xl md:text-6xl font-headline font-black text-on-surface placeholder:text-surface-variant focus:ring-0 w-full tracking-tighter" 
-                  placeholder="0,00" 
+                <input
+                  className="bg-transparent border-none p-0 text-5xl md:text-6xl font-headline font-black text-on-surface placeholder:text-surface-variant focus:ring-0 w-full tracking-tighter"
+                  placeholder="0,00"
                   type="text"
                   required
                   disabled={loading}
@@ -154,9 +157,9 @@ export default function NewTransactionPage() {
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Data</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-xl">calendar_today</span>
-                  <input 
-                    className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none" 
-                    type="date" 
+                  <input
+                    className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none"
+                    type="date"
                     required
                     disabled={loading}
                     value={date}
@@ -170,7 +173,7 @@ export default function NewTransactionPage() {
                 <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Categoria</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-xl">category</span>
-                  <select 
+                  <select
                     className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-10 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
                     value={category}
                     disabled={loading}
@@ -195,9 +198,9 @@ export default function NewTransactionPage() {
               <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Observação</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-4 top-4 text-primary text-xl">notes</span>
-                <textarea 
-                  className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/40 resize-none custom-scrollbar" 
-                  placeholder="Ex: Almoço com a equipe de design..." 
+                <textarea
+                  className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/40 resize-none custom-scrollbar"
+                  placeholder="Ex: Almoço com a equipe de design..."
                   rows={3}
                   disabled={loading}
                   value={description}
@@ -215,8 +218,8 @@ export default function NewTransactionPage() {
 
             {/* Actions */}
             <div className="pt-6 flex flex-col md:flex-row-reverse gap-4">
-              <button 
-                className="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black py-4 rounded-full shadow-[0_8px_20px_rgba(0,88,203,0.3)] hover:scale-[1.02] active:scale-95 transition-all duration-200 uppercase tracking-widest text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale" 
+              <button
+                className="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black py-4 rounded-full shadow-[0_8px_20px_rgba(0,88,203,0.3)] hover:scale-[1.02] active:scale-95 transition-all duration-200 uppercase tracking-widest text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale"
                 type="submit"
                 disabled={loading}
               >
@@ -229,7 +232,7 @@ export default function NewTransactionPage() {
                   'Salvar Lançamento'
                 )}
               </button>
-              <button 
+              <button
                 type="button"
                 disabled={loading}
                 onClick={() => router.back()}

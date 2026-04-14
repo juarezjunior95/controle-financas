@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
 import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
 
@@ -18,7 +18,7 @@ interface Transaction {
 }
 
 export default function TransactionsPage() {
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { token, isAuthenticated, isLoading: authLoading } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,18 +32,16 @@ export default function TransactionsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const loadTransactions = async () => {
-    if (!isLoaded || !isSignedIn) return;
+    if (authLoading || !isAuthenticated || !token) {
+      if (!authLoading) setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
-      const token = await getToken();
-      
-      if (!token) {
-        throw new Error("Não foi possível obter o token de autenticação.");
-      }
       
       const params = new URLSearchParams({
-        month: selectedMonth.toString(),
+        month: selectedMonth.toString(), 
         year: selectedYear.toString(),
       });
       
@@ -68,7 +66,6 @@ export default function TransactionsPage() {
     if (!confirm("Deseja realmente excluir esta transação?")) return;
 
     try {
-      const token = await getToken();
       const { error: apiError } = await fetchAPI(`/transactions/${id}`, {
         method: "DELETE",
         token,
@@ -89,11 +86,10 @@ export default function TransactionsPage() {
     if (!editingTransaction) return;
 
     try {
-      const token = await getToken();
       const { error: apiError } = await fetchAPI(`/transactions/${editingTransaction.id}`, {
         method: "PUT",
         token,
-        body: data,
+        body: JSON.stringify(data),
       });
 
       if (apiError) throw new Error(apiError.message);
@@ -108,7 +104,7 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     loadTransactions();
-  }, [selectedMonth, selectedYear, selectedType, isLoaded, isSignedIn]);
+  }, [selectedMonth, selectedYear, selectedType, authLoading, isAuthenticated, token]);
 
   // Formatação de Moeda
   const formatCurrency = (value: number | string) => {

@@ -8,9 +8,9 @@ export class TransactionController {
    */
   static async create(req: Request, res: Response) {
     try {
-      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
+      const userId = (req as AuthenticatedRequest).auth?.userId;
 
-      if (!clerkId) {
+      if (!userId) {
         res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
@@ -45,7 +45,7 @@ export class TransactionController {
       }
 
       const transaction = await TransactionService.create({
-        userId: clerkId,
+        userId: userId,
         type,
         amount: Number(amount),
         description: description || '',
@@ -74,16 +74,16 @@ export class TransactionController {
    */
   static async list(req: Request, res: Response) {
     try {
-      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
+      const userId = (req as AuthenticatedRequest).auth?.userId;
 
-      if (!clerkId) {
+      if (!userId) {
         res.status(401).json({ error: 'Não autorizado' });
         return;
       }
 
       const { month, year, type } = req.query;
 
-      const transactions = await TransactionService.listByUser(clerkId, {
+      const transactions = await TransactionService.listByUser(userId, {
         month: month ? Number(month) : undefined,
         year: year ? Number(year) : undefined,
         type: type as 'income' | 'expense' | undefined,
@@ -100,15 +100,15 @@ export class TransactionController {
    */
   static async update(req: Request, res: Response) {
     try {
-      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
+      const userId = (req as AuthenticatedRequest).auth?.userId;
       const { id } = req.params;
 
-      if (!clerkId) {
+      if (!userId) {
         res.status(401).json({ error: 'Não autorizado' });
         return;
       }
 
-      const transaction = await TransactionService.update(clerkId, id, req.body);
+      const transaction = await TransactionService.update(userId, id, req.body);
       res.status(200).json({ data: transaction, message: 'Transação atualizada.' });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -120,15 +120,15 @@ export class TransactionController {
    */
   static async delete(req: Request, res: Response) {
     try {
-      const clerkId = (req as AuthenticatedRequest).auth?.clerkId;
+      const userId = (req as AuthenticatedRequest).auth?.userId;
       const { id } = req.params;
 
-      if (!clerkId) {
+      if (!userId) {
         res.status(401).json({ error: 'Não autorizado' });
         return;
       }
 
-      await TransactionService.delete(clerkId, id);
+      await TransactionService.delete(userId, id);
       res.status(200).json({ message: 'Transação excluída com sucesso.' });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
