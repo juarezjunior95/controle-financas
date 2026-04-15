@@ -90,6 +90,47 @@ export class ClientService {
   }
 
   /**
+   * Atualiza o nome de exibição do usuário.
+   * O clerkId é usado para identificar o usuário.
+   */
+  static async updateDisplayName(clerkId: string, displayName: string) {
+    try {
+      const trimmed = displayName.trim();
+
+      if (!trimmed) {
+        throw new Error('O nome não pode estar vazio.');
+      }
+
+      if (trimmed.length < 2) {
+        throw new Error('O nome deve ter pelo menos 2 caracteres.');
+      }
+
+      if (trimmed.length > 50) {
+        throw new Error('O nome não pode ter mais de 50 caracteres.');
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { clerkId },
+      });
+
+      if (!user) {
+        throw new Error('Usuário não encontrado.');
+      }
+
+      const updated = await prisma.user.update({
+        where: { clerkId },
+        data: { displayName: trimmed },
+      });
+
+      console.log('[ClientService] Display name atualizado:', updated.id, '->', trimmed);
+      return updated;
+    } catch (error: any) {
+      console.error('[ClientService] Erro ao atualizar display name:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Sincroniza um usuário com base nos dados retornados pelo Clerk.
    * Busca o user completo no Clerk e faz upsert local.
    */

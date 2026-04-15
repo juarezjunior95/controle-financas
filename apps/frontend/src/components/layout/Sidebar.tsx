@@ -13,7 +13,14 @@ const MENU_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+
+  const initials = (user?.displayName || user?.nome || user?.email || "?")
+    .split(" ")
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <aside className="h-screen w-64 hidden md:flex flex-col bg-[#1c1b1b] py-8 space-y-2 shadow-[24px_0_48px_rgba(0,0,0,0.4)] z-50 shrink-0">
@@ -52,6 +59,36 @@ export function Sidebar() {
         </Link>
 
         <div className="pt-4 border-t border-[#424654]/20">
+          {/* Profile Link with Avatar */}
+          <Link
+            href="/profile"
+            className={`w-full py-2.5 flex items-center space-x-3 transition-colors rounded-lg px-2 ${
+              pathname === "/profile"
+                ? "text-[#b0c6ff] bg-[#353534]/50"
+                : "text-[#c3c6d6] hover:text-[#e5e2e1] hover:bg-[#353534]/30"
+            }`}
+          >
+            {user?.avatarUrl ? (
+              <img
+                src={user.avatarUrl}
+                alt=""
+                className="w-7 h-7 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#b0c6ff] to-[#0058cb] flex items-center justify-center text-[10px] font-bold text-[#001945]">
+                {initials}
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="font-source-sans-3 text-sm leading-tight">
+                {user?.displayName || user?.nome || "Meu Perfil"}
+              </span>
+              <span className="font-source-sans-3 text-[10px] opacity-50 leading-tight">
+                Minha Conta
+              </span>
+            </div>
+          </Link>
+
           <Link
             href="/help"
             className="text-[#c3c6d6] py-2 flex items-center space-x-3 hover:text-[#e5e2e1] transition-colors"

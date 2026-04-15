@@ -7,6 +7,7 @@ interface User {
   id: string;
   clerkId: string;
   email: string;
+  displayName: string | null;
   nome: string | null;
   sobrenome: string | null;
   avatarUrl: string | null;
@@ -18,6 +19,8 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   logout: () => void;
+  updateDisplayName: (name: string) => void;
+  updateAvatarUrl: (url: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,14 +75,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Sincronizar Usuário do Clerk para o formato interno
   useEffect(() => {
     if (clerkUser) {
-      setInternalUser({
-        id: clerkUser.id, // Em alguns casos usamos o clerkId como id local
+      const fullName = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ');
+      setInternalUser((prev) => ({
+        id: clerkUser.id,
         clerkId: clerkUser.id,
         email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        displayName: prev?.displayName || fullName || null,
         nome: clerkUser.firstName,
         sobrenome: clerkUser.lastName,
         avatarUrl: clerkUser.imageUrl,
-      });
+      }));
     } else {
       setInternalUser(null);
     }
@@ -90,6 +95,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     setInternalUser(null);
   }, [signOut]);
+
+  /**
+   * Atualiza o displayName no estado global imediatamente.
+   * Permite que Header, Dashboard, etc. reflitam a mudança sem reload.
+   */
+  const updateDisplayName = useCallback((name: string) => {
+    setInternalUser((prev) => prev ? { ...prev, displayName: name } : prev);
+  }, []);
+
+  /**
+   * Atualiza o avatarUrl no estado global imediatamente.
+   * Usado após upload/remoção de foto de perfil.
+   */
+  const updateAvatarUrl = useCallback((url: string | null) => {
+    setInternalUser((prev) => prev ? { ...prev, avatarUrl: url } : prev);
+  }, []);
 
   // Só consideramos carregado quando:
   // 1. Clerk auth está carregado
@@ -104,6 +125,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         isAuthenticated: !!userId && !!token,
         logout,
+        updateDisplayName,
+        updateAvatarUrl,
       }}
     >
       {children}
