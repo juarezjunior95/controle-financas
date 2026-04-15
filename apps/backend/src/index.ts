@@ -42,6 +42,7 @@ try {
   const { ClientController } = require('./modules/clients/client.controller');
   const { TransactionController } = require('./modules/transactions/transaction.controller');
   const { DashboardController } = require('./modules/dashboard/dashboard.controller');
+  const { CategoryController } = require('./modules/categories/category.controller');
 
   // Clerk middleware global — anexa auth state em todas as rotas
   app.use(clerkAuth);
@@ -60,6 +61,12 @@ try {
 
   // Rotas de dashboard
   apiRouter.get('/dashboard/summary', requireAuthentication, DashboardController.getSummary);
+
+  // Rotas de categorias
+  apiRouter.post('/categories', requireAuthentication, CategoryController.create);
+  apiRouter.get('/categories', requireAuthentication, CategoryController.list);
+  apiRouter.put('/categories/:id', requireAuthentication, CategoryController.update);
+  apiRouter.delete('/categories/:id', requireAuthentication, CategoryController.delete);
 
   // Rotas de transações
   apiRouter.post('/transactions', requireAuthentication, TransactionController.create);

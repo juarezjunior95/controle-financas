@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
+
+interface Category {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  isSystem: boolean;
+}
 
 export default function NewTransactionPage() {
   const router = useRouter();
@@ -14,12 +21,45 @@ export default function NewTransactionPage() {
   const [type, setType] = useState<"expense" | "income">("expense");
   const [amount, setAmount] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [category, setCategory] = useState("Alimentação");
+  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+
+  // Categorias reais do backend
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   // Estado de UI
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Carrega categorias reais da API
+  useEffect(() => {
+    if (!isAuthenticated || !token) return;
+
+    async function loadCategories() {
+      setCategoriesLoading(true);
+      try {
+        const { data, error: apiError } = await fetchAPI<Category[]>("/categories", { token });
+
+        if (apiError) {
+          console.error("[NewTransaction] Erro ao carregar categorias:", apiError.message);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          setCategories(data);
+          // Seleciona a primeira categoria como padrão se nenhuma estiver selecionada
+          setCategory((prev) => prev || data[0].name);
+        }
+      } catch (err) {
+        console.error("[NewTransaction] Falha ao buscar categorias:", err);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    }
+
+    loadCategories();
+  }, [isAuthenticated, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,17 +216,20 @@ export default function NewTransactionPage() {
                   <select
                     className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-10 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
                     value={category}
-                    disabled={loading}
+                    disabled={loading || categoriesLoading}
                     onChange={(e) => setCategory(e.target.value)}
                   >
-                    <option>Alimentação</option>
-                    <option>Transporte</option>
-                    <option>Moradia</option>
-                    <option>Saúde</option>
-                    <option>Lazer</option>
-                    <option>Trabalho</option>
-                    <option>Investimentos</option>
-                    <option>Outros</option>
+                    {categoriesLoading ? (
+                      <option value="">Carregando categorias...</option>
+                    ) : categories.length === 0 ? (
+                      <option value="">Nenhuma categoria encontrada</option>
+                    ) : (
+                      categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                   <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
                 </div>
