@@ -3,12 +3,49 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth";
+import { fetchAPI } from "@/lib/api";
 
 export default function AddCategoryPage() {
   const router = useRouter();
   const [selectedIcon, setSelectedIcon] = useState("shopping_bag");
   const [selectedFlow, setSelectedFlow] = useState<"expense" | "income" | "both">("expense");
   const [categoryName, setCategoryName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [selectedColor, setSelectedColor] = useState("#b0c6ff");
+  const { token } = useAuth();
+
+  const colors = [
+    "#b0c6ff", "#ffb59b", "#82f9d8", "#f8b0ff",
+    "#ffe082", "#ff8a80", "#b39ddb"
+  ];
+  
+  const handleCreateCategory = async () => {
+    if (!categoryName.trim()) {
+      setErrorMsg("O nome da categoria é obrigatório.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMsg("");
+
+    const res = await fetchAPI('/categories', {
+      method: 'POST',
+      token,
+      body: JSON.stringify({ name: categoryName.trim() })
+    });
+
+    setIsSubmitting(false);
+
+    if (res.error) {
+      setErrorMsg(res.error.message || "Erro ao criar categoria.");
+      return;
+    }
+
+    // Sucesso, voltar e/ou redirecionar
+    router.back();
+  };
 
   const icons = [
     "shopping_bag", "directions_car", "home", "medical_services",
@@ -62,6 +99,12 @@ export default function AddCategoryPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             {/* Form Column */}
             <div className="lg:col-span-7 space-y-8">
+              {errorMsg && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-3">
+                  <span className="material-symbols-outlined">error</span>
+                  <p className="font-body text-sm font-medium">{errorMsg}</p>
+                </div>
+              )}
               <section className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Identificação</label>
@@ -99,13 +142,21 @@ export default function AddCategoryPage() {
                 <div className="space-y-4">
                   <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Acento Cromático</label>
                   <div className="flex flex-wrap gap-4 p-4 bg-surface-container-low rounded-xl border border-outline-variant/10">
-                    <button className="w-8 h-8 rounded-full bg-[#b0c6ff] ring-4 ring-[#b0c6ff]/20 ring-offset-4 ring-offset-surface-container-low transition-all scale-110"></button>
-                    <button className="w-8 h-8 rounded-full bg-[#ffb59b] hover:scale-110 transition-transform"></button>
-                    <button className="w-8 h-8 rounded-full bg-[#82f9d8] hover:scale-110 transition-transform"></button>
-                    <button className="w-8 h-8 rounded-full bg-[#f8b0ff] hover:scale-110 transition-transform"></button>
-                    <button className="w-8 h-8 rounded-full bg-[#ffe082] hover:scale-110 transition-transform"></button>
-                    <button className="w-8 h-8 rounded-full bg-[#ff8a80] hover:scale-110 transition-transform"></button>
-                    <button className="w-8 h-8 rounded-full bg-[#b39ddb] hover:scale-110 transition-transform"></button>
+                    {colors.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => setSelectedColor(color)}
+                        className={`w-8 h-8 rounded-full transition-all duration-200 ${
+                          selectedColor === color
+                            ? "ring-4 ring-offset-4 ring-offset-surface-container-low scale-110"
+                            : "hover:scale-110"
+                        }`}
+                        style={{
+                          backgroundColor: color,
+                          ...(selectedColor === color ? { boxShadow: `0 0 0 4px ${color}33` } : {}),
+                        }}
+                      ></button>
+                    ))}
                   </div>
                 </div>
               </section>
@@ -189,10 +240,19 @@ export default function AddCategoryPage() {
                 <div className="space-y-4 pt-4">
                   <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-on-surface/40">Visualização em Tempo Real</label>
                   <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-surface-container to-surface-container-low p-6 shadow-editorial border border-white/5 group transition-all duration-500">
-                    <div className="absolute -right-12 -top-12 w-32 h-32 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all"></div>
+                    <div
+                      className="absolute -right-12 -top-12 w-32 h-32 rounded-full blur-3xl transition-all"
+                      style={{ backgroundColor: `${selectedColor}0D` }}
+                    ></div>
                     <div className="flex items-center gap-5 relative z-10 font-poppins">
-                      <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-[0px_8px_24px_rgba(176,198,255,0.3)] transition-all duration-300">
-                        <span className="material-symbols-outlined text-3xl text-on-primary">{selectedIcon}</span>
+                      <div
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300"
+                        style={{
+                          backgroundColor: selectedColor,
+                          boxShadow: `0px 8px 24px ${selectedColor}4D`,
+                        }}
+                      >
+                        <span className="material-symbols-outlined text-3xl text-[#131313]">{selectedIcon}</span>
                       </div>
                       <div>
                         <h4 className="text-xl font-bold font-headline text-on-surface tracking-tight truncate max-w-[180px]">
@@ -213,12 +273,24 @@ export default function AddCategoryPage() {
           <footer className="mt-12 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-end gap-4">
             <button
               onClick={() => router.back()}
-              className="w-full sm:w-auto px-10 h-14 rounded-full font-headline font-bold text-on-surface/60 hover:text-on-surface hover:bg-surface-container transition-all active:scale-95"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto px-10 h-14 rounded-full font-headline font-bold text-on-surface/60 hover:text-on-surface hover:bg-surface-container transition-all active:scale-95 disabled:opacity-50"
             >
               Cancelar
             </button>
-            <button className="w-full sm:w-auto px-12 h-14 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-headline font-extrabold shadow-[0px_12px_24px_rgba(0,88,203,0.3)] hover:shadow-[0px_16px_32px_rgba(0,88,203,0.4)] hover:-translate-y-0.5 transition-all active:scale-95">
-              Criar Categoria
+            <button 
+              onClick={handleCreateCategory}
+              disabled={isSubmitting || !categoryName.trim()}
+              className="w-full sm:w-auto px-12 h-14 rounded-full bg-gradient-to-br from-primary to-primary-container text-on-primary font-headline font-extrabold shadow-[0px_12px_24px_rgba(0,88,203,0.3)] hover:shadow-[0px_16px_32px_rgba(0,88,203,0.4)] hover:-translate-y-0.5 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                  Criando...
+                </>
+              ) : (
+                "Criar Categoria"
+              )}
             </button>
           </footer>
         </div>

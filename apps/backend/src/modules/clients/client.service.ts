@@ -1,5 +1,6 @@
 import { prisma } from '../../config/prisma';
 import { clerk } from '../../config/clerk';
+import { CategoryService } from '../categories/category.service';
 
 interface SyncUserData {
   clerkId: string;
@@ -41,6 +42,10 @@ export class ClientService {
       });
 
       console.log('[ClientService] Usuário sincronizado com sucesso:', user.id);
+
+      // Seed das categorias padrão assim que o usuário é sincronizado (criado ou atualizado)
+      await CategoryService.seedDefaultCategories(user.id);
+
       return user;
     } catch (error: any) {
       console.error('[ClientService] Erro ao sincronizar usuário:', JSON.stringify({
