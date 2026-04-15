@@ -61,6 +61,10 @@ try {
   apiRouter.post('/transactions', requireAuthentication, TransactionController.create);
   apiRouter.get('/transactions', requireAuthentication, TransactionController.list);
 
+  // Rotas de categorias
+  const categoriesRouter = require('./modules/categories/categories.route').default;
+  apiRouter.use('/categories', categoriesRouter);
+
   // Montar versionamento da API
   app.use('/api/v1', apiRouter);
 
@@ -68,7 +72,7 @@ try {
 } catch (error: any) {
   initError = error;
   console.error('[Backend] Erro ao carregar módulos:', error);
-  
+
   // Rota de fallback para informar o erro
   app.use('/api/v1/*', (_req, res) => {
     res.status(503).json({
@@ -94,8 +98,8 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   });
 });
 
-// ─── Iniciar servidor (apenas em ambiente local) ────────────────────────────
-if (process.env.NODE_ENV !== 'production') {
+// ─── Iniciar servidor (apenas em ambiente local e não em testes) ────────────
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   const port = process.env.PORT || 3333;
   app.listen(port, () => {
     console.log(`[Backend] Server is running on port ${port}`);
