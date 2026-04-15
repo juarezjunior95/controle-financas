@@ -6,22 +6,26 @@ import { MonthSelector } from "@/components/dashboard/MonthSelector";
 import { EditBalanceModal } from "@/components/dashboard/EditBalanceModal";
 import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
 import {
-  getInitialBalance,
-  setInitialBalance,
-  getTransactions,
-  addTransaction,
-  calculateTotals,
   formatCurrency,
   Transaction,
-  getCategories,
-  Category,
+  DEFAULT_CATEGORIES,
 } from "@/lib/storage";
+import { useAuth } from "@/lib/auth";
+import { fetchAPI } from "@/lib/api";
 
 export default function DashboardPage() {
+  const { token } = useAuth();
   const [mounted, setMounted] = useState(false);
-  const [initialBalance, setInitialBalanceState] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  
+  // O backend não tem saldo inicial via API ainda, mantemos 0 ou o que o user editar em memória
+  const [initialBalance, setInitialBalanceState] = useState(0); 
+  
+  // API State
+  const [summary, setSummary] = useState({ totalBalance: 0, monthlyIncome: 0, monthlyExpenses: 0 });
+  const [prevMonthSummary, setPrevMonthSummary] = useState({ monthlyIncome: 0, monthlyExpenses: 0 });
+  const [monthTransactions, setMonthTransactions] = useState<Transaction[]>([]);
+  
+  const categories = DEFAULT_CATEGORIES;
   
   // Mês/Ano selecionado
   const now = new Date();
@@ -32,35 +36,65 @@ export default function DashboardPage() {
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
 
-  // Carregar dados do localStorage
+  // Carregar dados da API
+  const loadDashboardData = useCallback(async () => {
+    if (!token) return;
+    try {
+      // Summary atual
+      const summaryRes = await fetchAPI(`/dashboard/summary?month=${selectedMonth}&year=${selectedYear}`, { token });
+      if (summaryRes.data) {
+        setSummary({
+          totalBalance: summaryRes.data.totalBalance || 0,
+          monthlyIncome: summaryRes.data.monthlyIncome || 0,
+          monthlyExpenses: summaryRes.data.monthlyExpenses || 0,
+        });
+      }
+
+      // Transações do mês atual
+      const txRes = await fetchAPI(`/transactions?month=${selectedMonth}&year=${selectedYear}`, { token });
+      if (txRes.data) {
+        // fetchAPI devolve { data: json.data } 
+        // no controller: res.status(200).json({ data: transactions })
+        setMonthTransactions(Array.isArray(txRes.data) ? txRes.data : []);
+      }
+
+      // Summary do mês anterior para variação
+      const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
+      const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
+      const prevSummaryRes = await fetchAPI(`/dashboard/summary?month=${prevMonth}&year=${prevYear}`, { token });
+      if (prevSummaryRes.data) {
+        setPrevMonthSummary({
+          monthlyIncome: prevSummaryRes.data.monthlyIncome || 0,
+          monthlyExpenses: prevSummaryRes.data.monthlyExpenses || 0,
+        });
+      }
+
+    } catch (error) {
+      console.error("Erro ao carregar dashboard:", error);
+    } finally {
+      setMounted(true);
+    }
+  }, [token, selectedMonth, selectedYear]);
+
   useEffect(() => {
-    setMounted(true);
-    setInitialBalanceState(getInitialBalance());
-    setTransactions(getTransactions());
-    setCategories(getCategories());
-  }, []);
+    if (token) {
+      loadDashboardData();
+    } else {
+      setMounted(true);
+    }
+  }, [token, loadDashboardData]);
 
-  // Calcular totais do mês selecionado
-  const { income, expense, transactions: monthTransactions } = calculateTotals(
-    transactions,
-    selectedMonth,
-    selectedYear
-  );
-
-  // Saldo atual = Saldo inicial + todas receitas - todas despesas
-  const allTimeIncome = transactions
-    .filter(t => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const allTimeExpense = transactions
-    .filter(t => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const currentBalance = initialBalance + allTimeIncome - allTimeExpense;
+  const income = summary.monthlyIncome;
+  const expense = summary.monthlyExpenses;
+  const currentBalance = summary.totalBalance + initialBalance;
 
   // Calcular gastos por categoria do mês
   const expensesByCategory = monthTransactions
     .filter(t => t.type === "expense")
     .reduce((acc, t) => {
-      acc[t.categoryId] = (acc[t.categoryId] || 0) + t.amount;
+      // Backward compatibility locale / category name
+      const catId = (t as any).category || t.categoryId;
+      acc[catId] = (acc[catId] || 0) + Number(t.amount);
       return acc;
     }, {} as Record<string, number>);
 
@@ -71,7 +105,7 @@ export default function DashboardPage() {
       const category = categories.find(c => c.id === catId);
       return {
         id: catId,
-        name: category?.name || "Outros",
+        name: category?.name || catId || "Outros",
         color: category?.color || "#90a4ae",
         amount,
         percentage: totalExpenseMonth > 0 ? (amount / totalExpenseMonth) * 100 : 0,
@@ -82,34 +116,41 @@ export default function DashboardPage() {
 
   // Handlers
   const handleSaveBalance = useCallback((value: number) => {
-    setInitialBalance(value);
     setInitialBalanceState(value);
   }, []);
 
-  const handleAddTransaction = useCallback((data: {
+  const handleAddTransaction = useCallback(async (data: {
     type: "income" | "expense";
     amount: number;
     categoryId: string;
     description: string;
     date: string;
   }) => {
-    const newTransaction = addTransaction(data);
-    setTransactions(prev => [...prev, newTransaction]);
-  }, []);
+    if (!token) return;
+    await fetchAPI('/transactions', {
+      method: 'POST',
+      token,
+      body: JSON.stringify({
+        type: data.type,
+        amount: data.amount,
+        description: data.description,
+        date: data.date,
+        category: data.categoryId, 
+      })
+    });
+    
+    // Atualiza dashboard
+    loadDashboardData();
+  }, [token, loadDashboardData]);
 
   const handleMonthChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
   }, []);
 
-  // Variação vs mês anterior (simplificado)
-  const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
-  const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
-  const { income: prevIncome, expense: prevExpense } = calculateTotals(
-    transactions,
-    prevMonth,
-    prevYear
-  );
+  // Variação vs mês anterior
+  const prevIncome = prevMonthSummary.monthlyIncome;
+  const prevExpense = prevMonthSummary.monthlyExpenses;
   
   const incomeVariation = prevIncome > 0 
     ? ((income - prevIncome) / prevIncome) * 100 
@@ -166,7 +207,7 @@ export default function DashboardPage() {
             <button
               onClick={() => setShowBalanceModal(true)}
               className="p-2 rounded-full bg-[#b0c6ff]/10 hover:bg-[#b0c6ff]/30 transition-colors"
-              title="Editar saldo inicial"
+              title="Editar saldo inicial virtual"
             >
               <span className="material-symbols-outlined text-[#b0c6ff] text-sm">edit</span>
             </button>
@@ -177,14 +218,9 @@ export default function DashboardPage() {
             <h3 className={`text-4xl font-bold font-dm-sans tracking-tighter ${
               currentBalance >= 0 ? "text-[#e5e2e1]" : "text-red-400"
             }`}>
-              {formatCurrency(currentBalance).replace("R$", "").trim()}
+              {formatCurrency(Math.abs(currentBalance)).replace("R$", "").trim()}
             </h3>
           </div>
-          {initialBalance > 0 && (
-            <p className="text-[10px] text-[#c3c6d6] mt-2">
-              Saldo inicial: {formatCurrency(initialBalance)}
-            </p>
-          )}
         </div>
 
         {/* Receitas */}
@@ -313,7 +349,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Próximas Metas (Mini Widget) */}
+        {/* Balanço do mês (Mini Widget) */}
         <div className="lg:col-span-4 space-y-6">
           <div className="bg-[#1c1b1b] p-8 rounded-xl border border-[#424654]/10 h-full flex flex-col">
             <div className="flex justify-between items-center mb-6">
@@ -366,8 +402,10 @@ export default function DashboardPage() {
           </div>
           
           <div className="space-y-3">
-            {monthTransactions.slice(-5).reverse().map((txn) => {
-              const category = categories.find(c => c.id === txn.categoryId);
+            {/* Limit max 5 items */}
+            {monthTransactions.slice(0, 5).map((txn) => {
+              const catId = (txn as any).category || txn.categoryId;
+              const category = categories.find(c => c.id === catId);
               return (
                 <div
                   key={txn.id}
@@ -376,28 +414,29 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-4">
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: `${category?.color}20` }}
+                      style={{ backgroundColor: `${category?.color || '#90a4ae'}20` }}
                     >
                       <span
                         className="material-symbols-outlined"
-                        style={{ color: category?.color }}
+                        style={{ color: category?.color || '#90a4ae' }}
                       >
                         {category?.icon || "receipt"}
                       </span>
                     </div>
                     <div>
                       <p className="font-medium text-on-surface">
-                        {txn.description || category?.name || "Transação"}
+                        {txn.description || category?.name || catId || "Transação"}
                       </p>
                       <p className="text-xs text-on-surface-variant">
-                        {new Date(txn.date).toLocaleDateString("pt-BR")}
+                        {/* Tratamento para data com ou sem T */}
+                        {new Date((txn as any).occurredOn || txn.date).toLocaleDateString("pt-BR")}
                       </p>
                     </div>
                   </div>
                   <span className={`font-bold ${
                     txn.type === "income" ? "text-green-400" : "text-red-400"
                   }`}>
-                    {txn.type === "income" ? "+" : "-"} {formatCurrency(txn.amount)}
+                    {txn.type === "income" ? "+" : "-"} {formatCurrency(Number(txn.amount))}
                   </span>
                 </div>
               );
