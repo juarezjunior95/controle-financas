@@ -58,6 +58,7 @@ try {
 
   // Rotas protegidas
   apiRouter.get('/clients/me', requireAuthentication, ClientController.getProfile);
+  apiRouter.put('/users/profile', requireAuthentication, ClientController.updateProfile);
 
   // Rotas de dashboard
   apiRouter.get('/dashboard/summary', requireAuthentication, DashboardController.getSummary);
