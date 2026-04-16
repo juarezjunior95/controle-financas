@@ -43,6 +43,7 @@ try {
   const { TransactionController } = require('./modules/transactions/transaction.controller');
   const { DashboardController } = require('./modules/dashboard/dashboard.controller');
   const { CategoryController } = require('./modules/categories/category.controller');
+  const { GoalController } = require('./modules/goals/goal.controller');
 
   // Clerk middleware global — anexa auth state em todas as rotas
   app.use(clerkAuth);
@@ -74,6 +75,14 @@ try {
   apiRouter.get('/transactions', requireAuthentication, TransactionController.list);
   apiRouter.put('/transactions/:id', requireAuthentication, TransactionController.update);
   apiRouter.delete('/transactions/:id', requireAuthentication, TransactionController.delete);
+
+  // Rotas de metas (Goals)
+  apiRouter.post('/goals', requireAuthentication, GoalController.create);
+  apiRouter.get('/goals', requireAuthentication, GoalController.list);
+  apiRouter.get('/goals/:id', requireAuthentication, GoalController.getById);
+  apiRouter.put('/goals/:id', requireAuthentication, GoalController.update);
+  apiRouter.delete('/goals/:id', requireAuthentication, GoalController.delete);
+  apiRouter.patch('/goals/:id/progress', requireAuthentication, GoalController.updateProgress);
 
   // Montar versionamento da API
   app.use('/api/v1', apiRouter);

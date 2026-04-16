@@ -58,11 +58,13 @@ model Transaction {
 model Goal {
   id            String    @id @default(uuid()) @db.Uuid
   userId        String    @map("user_id") @db.Uuid
-  name          String
+  title         String
   targetAmount  Decimal   @map("target_amount") @db.Decimal(15, 2)
   currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(15, 2)
-  dueDate       DateTime? @map("due_date") @db.Date
-  status        String    @default("active") // "active" | "completed" | "archived"
+  deadline      DateTime? @map("deadline") @db.Date
+  status        String    @default("active") // "active" | "completed" | "cancelled"
+  icon          String?   @default("savings")
+  color         String?   @default("#b0c6ff")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -71,3 +73,4 @@ model Goal {
   @@index([userId, status])
   @@map("goals")
 }
+
