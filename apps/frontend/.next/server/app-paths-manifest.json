@@ -1,1 +1,14 @@
-{}
+{
+  "/_not-found": "app/_not-found.js",
+  "/add-category/page": "app/add-category/page.js",
+  "/forgot-password/page": "app/forgot-password/page.js",
+  "/login/page": "app/login/page.js",
+  "/new-transaction/page": "app/new-transaction/page.js",
+  "/(dashboard)/goals/page": "app/(dashboard)/goals/page.js",
+  "/(dashboard)/categories/page": "app/(dashboard)/categories/page.js",
+  "/(dashboard)/profile/page": "app/(dashboard)/profile/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(dashboard)/new-goal/page": "app/(dashboard)/new-goal/page.js",
+  "/(dashboard)/page": "app/(dashboard)/page.js",
+  "/(dashboard)/transactions/page": "app/(dashboard)/transactions/page.js"
+}
