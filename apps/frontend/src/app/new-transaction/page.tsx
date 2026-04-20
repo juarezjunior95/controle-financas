@@ -31,6 +31,7 @@ export default function NewTransactionPage() {
   // Estado de UI
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false); // Criacao de estado de sucesso
 
   // Carrega categorias reais da API
   useEffect(() => {
@@ -70,6 +71,7 @@ export default function NewTransactionPage() {
 
     setLoading(true);
     setError(null);
+    setSuccess(false); // Evitar conflito entre o sucesso e erro
 
     try {
       // Limpar o valor (remover R$, etc se necessário, mas aqui é simples)
@@ -96,8 +98,14 @@ export default function NewTransactionPage() {
       }
 
       // Sucesso! Voltar para a página anterior ou dashboard
-      router.push("/transactions"); // Redireciona para a lista para ver o novo item
-      router.refresh();
+
+      setSuccess(true);
+      //Faz aguardar 1500 segundos antes de redirecionar
+      setTimeout(() => {
+        router.push("/transactions"); // Redireciona para a lista para ver o novo item
+        router.refresh() // Atualiza a pagina
+      }, 1500);
+
     } catch (err: any) {
       console.error("[NewTransaction] Erro ao salvar:", err);
       setError(err.message || "Ocorreu um erro ao salvar a transação.");
@@ -166,7 +174,7 @@ export default function NewTransactionPage() {
                 type="button"
                 disabled={loading}
                 onClick={() => setType("income")}
-                className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 ${type === 'income' ? 'bg-primary text-on-primary shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
+                className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 ${type === 'income' ? 'bg-error text-on-error shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
               >
                 Receita
               </button>
@@ -256,6 +264,13 @@ export default function NewTransactionPage() {
               <div className="p-4 bg-error/10 border border-error/20 rounded-xl text-error text-sm font-bold flex items-center gap-2">
                 <span className="material-symbols-outlined text-lg">error</span>
                 {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-600 text-sm font-bold flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg">check_circle</span>
+                A transação foi salva com sucesso!
               </div>
             )}
 
