@@ -51,6 +51,10 @@ A documentação completa de requisitos e especificações técnicas e de design
 | [docs/spec_ui.md](docs/spec_ui.md) | Especificação de UX/UI |
 | [docs/design_system.md](docs/design_system.md) | Design system base do produto |
 | [docs/modelo_dados.md](docs/modelo_dados.md) | Dicionário/Modelo de dados |
+| [docs/c4_model.md](docs/c4_model.md)| Desenho da arquitetura do software |
+| [docs/jornada_usuario.md](docs/jornada_usuario.md)| Conjunto de etapas da jornada do usuario |
+| [docs/lean_canvas.md](docs/lean_canvas.md)| Visao estrategica inicial do projeto|
+| [docs/persona.md](docs/persona.md)| Contexto de vida, objetivos financeiros e as principais dores da persona principal do projeto |
 
 ### Discovery Process
 
