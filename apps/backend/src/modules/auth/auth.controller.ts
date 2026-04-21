@@ -82,7 +82,6 @@ export class AuthController {
    */
   static async me(req: Request, res: Response): Promise<void> {
     try {
-
       const userId = (req as AuthenticatedRequest).auth?.userId;
 
       if (!userId) {
