@@ -111,7 +111,7 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   res.status(500).json({
     error: {
       code: 'INTERNAL_ERROR',
-      message: 'Erro interno do servidor.',
+      message: 'Ocorreu um erro inesperado em nosso servidor.',
       details: process.env.NODE_ENV !== 'production' ? err.message : undefined,
     },
   });
