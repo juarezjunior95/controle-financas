@@ -30,7 +30,8 @@ export class DashboardService {
 
       const totalIncomeAllTime = Number(totalSummary.find((t: any) => t.type === 'income')?._sum.amount || 0);
       const totalExpenseAllTime = Number(totalSummary.find((t: any) => t.type === 'expense')?._sum.amount || 0);
-      const totalBalance = totalIncomeAllTime - totalExpenseAllTime;
+      const initialBalance = Number(user.initialBalance);
+      const totalBalance = initialBalance + totalIncomeAllTime - totalExpenseAllTime;
 
       // 3. Cálculo do Mês Atual
       const monthlySummary = await prisma.transaction.groupBy({
@@ -50,6 +51,7 @@ export class DashboardService {
       const monthlyBalance = monthlyIncome - monthlyExpenses;
 
       return {
+        initialBalance,
         totalBalance,
         monthlyIncome,
         monthlyExpenses,

@@ -131,6 +131,34 @@ export class ClientService {
   }
 
   /**
+   * Busca o saldo inicial do usuário.
+   */
+  static async getInitialBalance(clerkId: string): Promise<number> {
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (!user) throw new Error('Usuário não encontrado.');
+    return Number(user.initialBalance);
+  }
+
+  /**
+   * Atualiza o saldo inicial do usuário.
+   */
+  static async updateInitialBalance(clerkId: string, initialBalance: number): Promise<number> {
+    if (typeof initialBalance !== 'number' || isNaN(initialBalance)) {
+      throw new Error('O saldo inicial deve ser um número válido.');
+    }
+
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (!user) throw new Error('Usuário não encontrado.');
+
+    const updated = await prisma.user.update({
+      where: { clerkId },
+      data: { initialBalance },
+    });
+
+    return Number(updated.initialBalance);
+  }
+
+  /**
    * Sincroniza um usuário com base nos dados retornados pelo Clerk.
    * Busca o user completo no Clerk e faz upsert local.
    */

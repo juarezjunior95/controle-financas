@@ -5,125 +5,196 @@ import { useState, useEffect, useCallback } from "react";
 import { MonthSelector } from "@/components/dashboard/MonthSelector";
 import { EditBalanceModal } from "@/components/dashboard/EditBalanceModal";
 import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
-import {
-  getInitialBalance,
-  setInitialBalance,
-  getTransactions,
-  addTransaction,
-  calculateTotals,
-  formatCurrency,
-  Transaction,
-  getCategories,
-  Category,
-} from "@/lib/storage";
+import { useAuth } from "@/lib/auth";
+import { fetchAPI } from "@/lib/api";
+import { formatCurrency } from "@/lib/storage";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface DashboardSummary {
+  initialBalance: number;
+  totalBalance: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  monthlyBalance: number;
+}
+
+interface Category {
+  id: string;
+  name: string;
+}
+
+interface Transaction {
+  id: string;
+  type: "income" | "expense";
+  amount: string;
+  occurredOn: string;
+  description: string | null;
+  category: Category;
+}
+
+interface CategoryStat {
+  name: string;
+  amount: number;
+  percentage: number;
+  color: string;
+}
+
+// ─── Color palette para categorias (sem ícone da API ainda) ──────────────────
+const CATEGORY_COLORS = [
+  "#b0c6ff", "#ffb59b", "#a1b4eb", "#b388ff",
+  "#69f0ae", "#ffd740", "#ff8a80", "#82b1ff",
+];
+
+function getCategoryColor(index: number): string {
+  return CATEGORY_COLORS[index % CATEGORY_COLORS.length];
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DashboardPage() {
-  const [mounted, setMounted] = useState(false);
-  const [initialBalance, setInitialBalanceState] = useState(0);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  
-  // Mês/Ano selecionado
+  const { token } = useAuth();
+
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  
-  // Modais
+
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [showTransactionModal, setShowTransactionModal] = useState(false);
+  const [isSavingBalance, setIsSavingBalance] = useState(false);
 
-  // Carregar dados do localStorage
+  // ─── Fetch dashboard summary + transactions do mês ─────────────────────────
+  const fetchData = useCallback(async () => {
+    if (!token) return;
+    setIsLoading(true);
+    setError(null);
+
+    const month = selectedMonth + 1; // API usa 1-12, JS usa 0-11
+    const year = selectedYear;
+
+    const [summaryResult, txResult] = await Promise.all([
+      fetchAPI<DashboardSummary>("/dashboard/summary", { token }),
+      fetchAPI<Transaction[]>(`/transactions?month=${month}&year=${year}`, { token }),
+    ]);
+
+    if (summaryResult.error) {
+      setError(summaryResult.error.message);
+    } else {
+      setSummary(summaryResult.data ?? null);
+    }
+
+    if (!txResult.error) {
+      setTransactions(txResult.data ?? []);
+    }
+
+    setIsLoading(false);
+  }, [token, selectedMonth, selectedYear]);
+
   useEffect(() => {
-    setMounted(true);
-    setInitialBalanceState(getInitialBalance());
-    setTransactions(getTransactions());
-    setCategories(getCategories());
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
-  // Calcular totais do mês selecionado
-  const { income, expense, transactions: monthTransactions } = calculateTotals(
-    transactions,
-    selectedMonth,
-    selectedYear
-  );
+  // ─── Variação vs mês anterior ────────────────────────────────────────────
 
-  // Saldo atual = Saldo inicial + todas receitas - todas despesas
-  const allTimeIncome = transactions
-    .filter(t => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const allTimeExpense = transactions
-    .filter(t => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const currentBalance = initialBalance + allTimeIncome - allTimeExpense;
+  const calcVariation = (current: number, prev: number) =>
+    prev > 0 ? ((current - prev) / prev) * 100 : current > 0 ? 100 : 0;
 
-  // Calcular gastos por categoria do mês
-  const expensesByCategory = monthTransactions
-    .filter(t => t.type === "expense")
+  // ─── Gastos por categoria (calculado a partir das transações do mês) ────────
+
+  const expensesByCategory = transactions
+    .filter((t) => t.type === "expense")
     .reduce((acc, t) => {
-      acc[t.categoryId] = (acc[t.categoryId] || 0) + t.amount;
+      const name = t.category.name;
+      acc[name] = (acc[name] || 0) + Number(t.amount);
       return acc;
     }, {} as Record<string, number>);
 
   const totalExpenseMonth = Object.values(expensesByCategory).reduce((a, b) => a + b, 0);
 
-  const categoryData = Object.entries(expensesByCategory)
-    .map(([catId, amount]) => {
-      const category = categories.find(c => c.id === catId);
-      return {
-        id: catId,
-        name: category?.name || "Outros",
-        color: category?.color || "#90a4ae",
-        amount,
-        percentage: totalExpenseMonth > 0 ? (amount / totalExpenseMonth) * 100 : 0,
-      };
-    })
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 4);
+  const categoryData: CategoryStat[] = Object.entries(expensesByCategory)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([name, amount], index) => ({
+      name,
+      amount,
+      percentage: totalExpenseMonth > 0 ? (amount / totalExpenseMonth) * 100 : 0,
+      color: getCategoryColor(index),
+    }));
 
-  // Handlers
-  const handleSaveBalance = useCallback((value: number) => {
-    setInitialBalance(value);
-    setInitialBalanceState(value);
-  }, []);
+  // ─── Handlers ────────────────────────────────────────────────────────────
 
-  const handleAddTransaction = useCallback((data: {
-    type: "income" | "expense";
-    amount: number;
-    category: string;
-    description: string;
-    date: string;
-  }) => {
-    // Para o storage local, mapeamos o nome da categoria para um ID
-    const cat = categories.find(c => c.name === data.category);
-    const storageData = { ...data, categoryId: cat?.id || "cat-9" };
-    
-    // @ts-ignore - Adaptando p/ o storage local temporário
-    const newTransaction = addTransaction(storageData);
-    setTransactions(prev => [...prev, newTransaction]);
-  }, [categories]);
+  const handleSaveBalance = useCallback(
+    async (value: number) => {
+      if (!token) return;
+      setIsSavingBalance(true);
+      const { data, error: err } = await fetchAPI<{ initialBalance: number }>(
+        "/users/initial-balance",
+        { method: "PUT", token, body: JSON.stringify({ initialBalance: value }) }
+      );
+      if (err) {
+        alert("Erro ao salvar saldo: " + err.message);
+      } else if (data) {
+        setSummary((prev) =>
+          prev
+            ? {
+                ...prev,
+                initialBalance: data.initialBalance,
+                totalBalance:
+                  data.initialBalance +
+                  (prev.totalBalance - prev.initialBalance),
+              }
+            : prev
+        );
+        setShowBalanceModal(false);
+      }
+      setIsSavingBalance(false);
+    },
+    [token]
+  );
+
+  const handleAddTransaction = useCallback(
+    async (data: {
+      type: "income" | "expense";
+      amount: number;
+      category: string;
+      description: string;
+      date: string;
+    }) => {
+      if (!token) return;
+      const { error: err } = await fetchAPI("/transactions", {
+        method: "POST",
+        token,
+        body: JSON.stringify({
+          type: data.type,
+          amount: data.amount,
+          category: data.category,
+          description: data.description,
+          date: data.date,
+        }),
+      });
+      if (err) {
+        alert("Erro ao criar transação: " + err.message);
+      } else {
+        setShowTransactionModal(false);
+        fetchData();
+      }
+    },
+    [token, fetchData]
+  );
 
   const handleMonthChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
     setSelectedYear(year);
   }, []);
 
-  // Variação vs mês anterior (simplificado)
-  const prevMonth = selectedMonth === 0 ? 11 : selectedMonth - 1;
-  const prevYear = selectedMonth === 0 ? selectedYear - 1 : selectedYear;
-  const { income: prevIncome, expense: prevExpense } = calculateTotals(
-    transactions,
-    prevMonth,
-    prevYear
-  );
-  
-  const incomeVariation = prevIncome > 0 
-    ? ((income - prevIncome) / prevIncome) * 100 
-    : income > 0 ? 100 : 0;
-  const expenseVariation = prevExpense > 0 
-    ? ((expense - prevExpense) / prevExpense) * 100 
-    : expense > 0 ? 100 : 0;
+  // ─── Loading ──────────────────────────────────────────────────────────────
 
-  if (!mounted) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <span className="material-symbols-outlined animate-spin text-4xl text-primary">
@@ -133,9 +204,30 @@ export default function DashboardPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 text-on-surface-variant">
+        <span className="material-symbols-outlined text-5xl text-error">cloud_off</span>
+        <p className="text-sm text-center max-w-xs">{error}</p>
+        <button
+          onClick={fetchData}
+          className="text-primary text-sm hover:underline flex items-center gap-1"
+        >
+          <span className="material-symbols-outlined text-sm">refresh</span>
+          Tentar novamente
+        </button>
+      </div>
+    );
+  }
+
+  const income = summary?.monthlyIncome ?? 0;
+  const expense = summary?.monthlyExpenses ?? 0;
+  const currentBalance = summary?.totalBalance ?? 0;
+  const initialBalance = summary?.initialBalance ?? 0;
+
   return (
     <>
-      {/* Header Section */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
         <div>
           <h2 className="text-[#e5e2e1] text-3xl font-bold font-dm-sans tracking-tight mb-2">
@@ -147,9 +239,9 @@ export default function DashboardPage() {
             onChange={handleMonthChange}
           />
         </div>
-        
+
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => setShowTransactionModal(true)}
             className="bg-primary text-on-primary px-5 py-2.5 rounded-full text-sm font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg"
           >
@@ -159,11 +251,11 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Bento Grid: Main Cards */}
+      {/* Bento Grid: Cards principais */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-        {/* Saldo Atual (Primary Anchor) */}
+        {/* Saldo Atual */}
         <div className="md:col-span-1 bg-gradient-to-br from-[#b0c6ff]/10 to-transparent p-8 rounded-xl border border-[#b0c6ff]/10 shadow-[0_24px_48px_rgba(0,0,0,0.4)] relative overflow-hidden group">
-          <div className="absolute -top-4 -right-4 w-32 h-32 bg-[#b0c6ff]/5 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute -top-4 -right-4 w-32 h-32 bg-[#b0c6ff]/5 rounded-full blur-3xl pointer-events-none" />
           <div className="flex justify-between items-start mb-8 relative z-10">
             <div className="p-3 bg-[#b0c6ff]/20 rounded-2xl text-[#b0c6ff]">
               <span className="material-symbols-outlined" translate="no">account_balance</span>
@@ -179,9 +271,11 @@ export default function DashboardPage() {
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Saldo Atual</p>
           <div className="flex items-baseline gap-1">
             <span className="text-[#b0c6ff] text-lg font-dm-sans">R$</span>
-            <h3 className={`text-4xl font-bold font-dm-sans tracking-tighter ${
-              currentBalance >= 0 ? "text-[#e5e2e1]" : "text-red-400"
-            }`}>
+            <h3
+              className={`text-4xl font-bold font-dm-sans tracking-tighter ${
+                currentBalance >= 0 ? "text-[#e5e2e1]" : "text-red-400"
+              }`}
+            >
               {formatCurrency(currentBalance).replace("R$", "").trim()}
             </h3>
           </div>
@@ -193,18 +287,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Receitas */}
-        <div className="bg-surface-container-low p-8 rounded-xl hover:bg-surface-container-high transition-colors group">
+        <div className="bg-surface-container-low p-8 rounded-xl hover:bg-surface-container-high transition-colors">
           <div className="flex justify-between items-start mb-8">
             <div className="p-3 bg-green-500/20 rounded-2xl text-green-400">
               <span className="material-symbols-outlined" translate="no">trending_up</span>
             </div>
-            {incomeVariation !== 0 && (
-              <span className={`text-[10px] font-bold tracking-widest ${
-                incomeVariation > 0 ? "text-green-400" : "text-red-400"
-              }`}>
-                {incomeVariation > 0 ? "+" : ""}{incomeVariation.toFixed(0)}% vs mês ant.
-              </span>
-            )}
           </div>
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Receitas do Mês</p>
           <div className="flex items-baseline gap-1">
@@ -216,18 +303,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Despesas */}
-        <div className="bg-surface-container-low p-8 rounded-xl hover:bg-surface-container-high transition-colors group">
+        <div className="bg-surface-container-low p-8 rounded-xl hover:bg-surface-container-high transition-colors">
           <div className="flex justify-between items-start mb-8">
             <div className="p-3 bg-red-500/20 rounded-2xl text-red-400">
               <span className="material-symbols-outlined" translate="no">trending_down</span>
             </div>
-            {expenseVariation !== 0 && (
-              <span className={`text-[10px] font-bold tracking-widest ${
-                expenseVariation < 0 ? "text-green-400" : "text-red-400"
-              }`}>
-                {expenseVariation > 0 ? "+" : ""}{expenseVariation.toFixed(0)}% vs mês ant.
-              </span>
-            )}
           </div>
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Despesas do Mês</p>
           <div className="flex items-baseline gap-1">
@@ -239,9 +319,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Secondary Section: Charts & Metas */}
+      {/* Charts & Balanço */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
         {/* Gastos por Categoria */}
         <div className="lg:col-span-8 bg-surface-container-low p-8 rounded-xl">
           <div className="flex justify-between items-center mb-10">
@@ -250,27 +329,26 @@ export default function DashboardPage() {
               Ver todas
             </Link>
           </div>
-          
+
           {categoryData.length > 0 ? (
             <div className="flex flex-col md:flex-row items-center gap-12">
-              {/* Donut Chart */}
+              {/* Donut */}
               <div className="relative w-48 h-48 flex items-center justify-center">
                 <svg className="w-full h-full transform -rotate-90">
-                  <circle cx="96" cy="96" fill="transparent" r="80" stroke="#353534" strokeWidth="20"></circle>
+                  <circle
+                    cx="96" cy="96" fill="transparent" r="80"
+                    stroke="#353534" strokeWidth="20"
+                  />
                   {categoryData.map((cat, index) => {
                     const circumference = 2 * Math.PI * 80;
                     const offset = categoryData
                       .slice(0, index)
                       .reduce((sum, c) => sum + (c.percentage / 100) * circumference, 0);
                     const dashArray = (cat.percentage / 100) * circumference;
-                    
                     return (
                       <circle
-                        key={cat.id}
-                        cx="96"
-                        cy="96"
-                        fill="transparent"
-                        r="80"
+                        key={cat.name}
+                        cx="96" cy="96" fill="transparent" r="80"
                         stroke={cat.color}
                         strokeWidth="20"
                         strokeDasharray={`${dashArray} ${circumference}`}
@@ -285,13 +363,13 @@ export default function DashboardPage() {
                   <p className="text-xl font-bold font-dm-sans">{formatCurrency(totalExpenseMonth)}</p>
                 </div>
               </div>
-              
+
               {/* Legend */}
               <div className="flex-1 w-full space-y-4">
                 {categoryData.map((cat) => (
-                  <div key={cat.id} className="flex items-center justify-between">
+                  <div key={cat.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }}></div>
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
                       <span className="text-sm font-source-sans-3">{cat.name}</span>
                     </div>
                     <div className="flex items-center gap-4">
@@ -304,9 +382,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <span className="material-symbols-outlined text-6xl text-[#424654] mb-4">
-                pie_chart
-              </span>
+              <span className="material-symbols-outlined text-6xl text-[#424654] mb-4">pie_chart</span>
               <p className="text-[#c3c6d6] mb-2">Nenhuma despesa neste mês</p>
               <button
                 onClick={() => setShowTransactionModal(true)}
@@ -318,95 +394,98 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Próximas Metas (Mini Widget) */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* Balanço do Mês */}
+        <div className="lg:col-span-4">
           <div className="bg-[#1c1b1b] p-8 rounded-xl border border-[#424654]/10 h-full flex flex-col">
             <div className="flex justify-between items-center mb-6">
               <h4 className="font-dm-sans text-lg font-bold text-[#e5e2e1]">Balanço do Mês</h4>
-              <span 
+              <span
                 className="material-symbols-outlined text-sm"
-                style={{ 
+                style={{
                   color: income - expense >= 0 ? "#69f0ae" : "#ff8a80",
-                  fontVariationSettings: "'FILL' 1" 
+                  fontVariationSettings: "'FILL' 1",
                 }}
               >
                 {income - expense >= 0 ? "trending_up" : "trending_down"}
               </span>
             </div>
-            
+
             <div className="flex-1 flex flex-col justify-center">
               <p className="text-[#c3c6d6] text-xs mb-2">
                 {income - expense >= 0 ? "Você economizou" : "Você gastou a mais"}
               </p>
-              <p className={`text-4xl font-bold font-dm-sans ${
-                income - expense >= 0 ? "text-green-400" : "text-red-400"
-              }`}>
+              <p
+                className={`text-4xl font-bold font-dm-sans ${
+                  income - expense >= 0 ? "text-green-400" : "text-red-400"
+                }`}
+              >
                 {formatCurrency(Math.abs(income - expense))}
               </p>
               <p className="text-[#c3c6d6] text-xs mt-4">
-                Receitas: {formatCurrency(income)}<br/>
+                Receitas: {formatCurrency(income)}
+                <br />
                 Despesas: {formatCurrency(expense)}
               </p>
             </div>
-            
-            <Link href="/goals" className="mt-8 text-[#b0c6ff] text-sm font-bold flex items-center justify-center gap-2 hover:underline">
+
+            <Link
+              href="/goals"
+              className="mt-8 text-[#b0c6ff] text-sm font-bold flex items-center justify-center gap-2 hover:underline"
+            >
               Ver metas financeiras
               <span className="material-symbols-outlined text-sm" translate="no">arrow_forward</span>
             </Link>
           </div>
         </div>
-
       </div>
 
-      {/* Últimas Transações */}
-      {monthTransactions.length > 0 && (
+      {/* Últimas Transações do Mês */}
+      {transactions.length > 0 && (
         <div className="mt-8 bg-surface-container-low p-8 rounded-xl">
           <div className="flex justify-between items-center mb-6">
-            <h4 className="font-dm-sans text-lg font-bold text-[#e5e2e1]">
-              Últimas Transações
-            </h4>
+            <h4 className="font-dm-sans text-lg font-bold text-[#e5e2e1]">Últimas Transações</h4>
             <Link href="/transactions" className="text-primary text-sm hover:underline">
               Ver todas
             </Link>
           </div>
-          
+
           <div className="space-y-3">
-            {monthTransactions.slice(-5).reverse().map((txn) => {
-              const category = categories.find(c => c.id === txn.categoryId);
-              return (
-                <div
-                  key={txn.id}
-                  className="flex items-center justify-between p-4 bg-surface-container-high rounded-xl"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: `${category?.color}20` }}
-                    >
-                      <span
-                        className="material-symbols-outlined"
-                        style={{ color: category?.color }}
-                      >
-                        {category?.icon || "receipt"}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-on-surface">
-                        {txn.description || category?.name || "Transação"}
-                      </p>
-                      <p className="text-xs text-on-surface-variant">
-                        {new Date(txn.date).toLocaleDateString("pt-BR")}
-                      </p>
-                    </div>
+            {transactions.slice(0, 5).map((txn) => (
+              <div
+                key={txn.id}
+                className="flex items-center justify-between p-4 bg-surface-container-high rounded-xl"
+              >
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      txn.type === "income"
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-red-500/20 text-red-400"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-sm">
+                      {txn.type === "income" ? "payments" : "shopping_bag"}
+                    </span>
                   </div>
-                  <span className={`font-bold ${
-                    txn.type === "income" ? "text-green-400" : "text-red-400"
-                  }`}>
-                    {txn.type === "income" ? "+" : "-"} {formatCurrency(txn.amount)}
-                  </span>
+                  <div>
+                    <p className="font-medium text-on-surface">
+                      {txn.description || txn.category.name}
+                    </p>
+                    <p className="text-xs text-on-surface-variant">
+                      {txn.category.name} •{" "}
+                      {new Date(txn.occurredOn + "T00:00:00").toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
                 </div>
-              );
-            })}
+                <span
+                  className={`font-bold ${
+                    txn.type === "income" ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {txn.type === "income" ? "+" : "-"} {formatCurrency(Number(txn.amount))}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}

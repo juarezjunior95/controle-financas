@@ -7,13 +7,14 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid()) @db.Uuid
-  clerkId       String   @unique @map("clerk_id")
-  email         String   @unique
-  displayName   String?  @map("display_name")
-  avatarUrl     String?  @map("avatar_url")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid()) @db.Uuid
+  clerkId        String   @unique @map("clerk_id")
+  email          String   @unique
+  displayName    String?  @map("display_name")
+  avatarUrl      String?  @map("avatar_url")
+  initialBalance Decimal  @default(0) @map("initial_balance") @db.Decimal(15, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   categories    Category[]
   transactions  Transaction[]

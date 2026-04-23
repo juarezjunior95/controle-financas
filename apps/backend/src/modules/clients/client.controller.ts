@@ -37,6 +37,71 @@ export class ClientController {
   }
 
   /**
+   * GET /api/v1/users/initial-balance
+   * Retorna o saldo inicial do usuário autenticado.
+   */
+  static async getInitialBalance(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as AuthenticatedRequest).auth?.userId;
+      if (!userId) {
+        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' } });
+        return;
+      }
+
+      const initialBalance = await ClientService.getInitialBalance(userId);
+      res.json({ data: { initialBalance } });
+    } catch (error: any) {
+      console.error('[ClientController] Erro ao buscar saldo inicial:', error);
+      if (error.message === 'Usuário não encontrado.') {
+        res.status(404).json({ error: { code: 'NOT_FOUND', message: error.message } });
+        return;
+      }
+      res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Erro interno ao buscar saldo inicial.' } });
+    }
+  }
+
+  /**
+   * PUT /api/v1/users/initial-balance
+   * Atualiza o saldo inicial do usuário autenticado.
+   */
+  static async updateInitialBalance(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as AuthenticatedRequest).auth?.userId;
+      if (!userId) {
+        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' } });
+        return;
+      }
+
+      const { initialBalance } = req.body;
+
+      if (initialBalance === undefined || initialBalance === null) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'O campo "initialBalance" é obrigatório.' },
+        });
+        return;
+      }
+
+      const parsed = Number(initialBalance);
+      if (isNaN(parsed)) {
+        res.status(400).json({
+          error: { code: 'VALIDATION_ERROR', message: 'O saldo inicial deve ser um número válido.' },
+        });
+        return;
+      }
+
+      const updated = await ClientService.updateInitialBalance(userId, parsed);
+      res.json({ data: { initialBalance: updated }, message: 'Saldo inicial atualizado com sucesso.' });
+    } catch (error: any) {
+      console.error('[ClientController] Erro ao atualizar saldo inicial:', error);
+      if (error.message === 'Usuário não encontrado.' || error.message === 'O saldo inicial deve ser um número válido.') {
+        res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: error.message } });
+        return;
+      }
+      res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Erro interno ao atualizar saldo inicial.' } });
+    }
+  }
+
+  /**
    * PUT /api/v1/users/profile
    * Atualiza o nome de exibição do usuário autenticado.
    */

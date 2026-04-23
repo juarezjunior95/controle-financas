@@ -60,6 +60,8 @@ try {
   // Rotas protegidas
   apiRouter.get('/clients/me', requireAuthentication, ClientController.getProfile);
   apiRouter.put('/users/profile', requireAuthentication, ClientController.updateProfile);
+  apiRouter.get('/users/initial-balance', requireAuthentication, ClientController.getInitialBalance);
+  apiRouter.put('/users/initial-balance', requireAuthentication, ClientController.updateInitialBalance);
 
   // Rotas de dashboard
   apiRouter.get('/dashboard/summary', requireAuthentication, DashboardController.getSummary);

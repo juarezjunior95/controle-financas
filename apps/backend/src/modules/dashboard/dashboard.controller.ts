@@ -21,7 +21,7 @@ export class DashboardController {
 
       const summary = await DashboardService.getSummary(clerkId);
 
-      return res.status(200).json(summary);
+      return res.status(200).json({ data: summary });
     } catch (error: any) {
       console.error('[DashboardController] Erro no endpoint summary:', error);
       
