@@ -5,6 +5,7 @@ import { clerkAuth, requireAuthentication } from './middleware/auth.middleware';
 import { HealthController } from './modules/health/health.controller';
 import { AuthController } from './modules/auth/auth.controller';
 import { ClientController } from './modules/clients/client.controller';
+import { DashboardController } from './modules/dashboard/dashboard.controller';
 
 const app = express();
 
@@ -35,6 +36,7 @@ apiRouter.post('/auth/login', AuthController.login);
 // Rotas protegidas (exigem Bearer token válido)
 apiRouter.get('/auth/me', requireAuthentication, AuthController.me);
 apiRouter.get('/clients/me', requireAuthentication, ClientController.getProfile);
+apiRouter.get('/dashboard/summary', requireAuthentication, DashboardController.getSummary);
 
 // Montar versionamento da API
 app.use('/api/v1', apiRouter);

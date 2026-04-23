@@ -1,8 +1,51 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { fetchAPI } from "@/lib/api";
 
 export default function DashboardPage() {
+  const { token } = useAuth();
+  const [summary, setSummary] = useState({
+    saldoAtual: 0,
+    receitas: 0,
+    despesas: 0,
+    categorias: [] as { name: string; amount: number; color: string }[],
+    isLoading: true,
+  });
+
+  useEffect(() => {
+    async function loadSummary() {
+      if (!token) return;
+      // Integração com a API de resumo do dashboard
+      const { data, error } = await fetchAPI('/dashboard/summary', { token });
+      if (!error && data) {
+        setSummary({
+          saldoAtual: data.saldoAtual || 0,
+          receitas: data.receitas || 0,
+          despesas: data.despesas || 0,
+          categorias: data.categorias || [],
+          isLoading: false,
+        });
+      } else {
+        setSummary(prev => ({ ...prev, isLoading: false }));
+      }
+    }
+    loadSummary();
+  }, [token]);
+
+  const circumference = 2 * Math.PI * 80;
+  const totalDespesasCategoria = summary.categorias.reduce((acc, cat) => acc + cat.amount, 0);
+  let currentOffset = 0;
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  };
+
   return (
     <>
       {/* Header Section */}
@@ -47,7 +90,9 @@ export default function DashboardPage() {
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Saldo Atual</p>
           <div className="flex items-baseline gap-1">
             <span className="text-[#b0c6ff] text-lg font-dm-sans">R$</span>
-            <h3 className="text-[#e5e2e1] text-4xl font-bold font-dm-sans tracking-tighter">12.450,00</h3>
+            <h3 className="text-[#e5e2e1] text-4xl font-bold font-dm-sans tracking-tighter">
+              {summary.isLoading ? '...' : formatCurrency(summary.saldoAtual)}
+            </h3>
           </div>
         </div>
 
@@ -62,7 +107,9 @@ export default function DashboardPage() {
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Receitas</p>
           <div className="flex items-baseline gap-1">
             <span className="text-[#c3c6d6] text-sm font-dm-sans">R$</span>
-            <h3 className="text-[#e5e2e1] text-3xl font-bold font-dm-sans tracking-tight">8.200,50</h3>
+            <h3 className="text-[#e5e2e1] text-3xl font-bold font-dm-sans tracking-tight">
+              {summary.isLoading ? '...' : formatCurrency(summary.receitas)}
+            </h3>
           </div>
         </div>
 
@@ -77,7 +124,9 @@ export default function DashboardPage() {
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Despesas</p>
           <div className="flex items-baseline gap-1">
             <span className="text-[#c3c6d6] text-sm font-dm-sans">R$</span>
-            <h3 className="text-[#e5e2e1] text-3xl font-bold font-dm-sans tracking-tight">3.140,20</h3>
+            <h3 className="text-[#e5e2e1] text-3xl font-bold font-dm-sans tracking-tight">
+              {summary.isLoading ? '...' : formatCurrency(summary.despesas)}
+            </h3>
           </div>
         </div>
       </div>
@@ -93,49 +142,58 @@ export default function DashboardPage() {
           </div>
           <div className="flex flex-col md:flex-row items-center gap-12">
             
-            {/* Donut Mockup */}
+            {/* Donut Chart */}
             <div className="relative w-48 h-48 flex items-center justify-center">
               <svg className="w-full h-full transform -rotate-90">
                 <circle cx="96" cy="96" fill="transparent" r="80" stroke="#353534" strokeWidth="20"></circle>
-                <circle cx="96" cy="96" fill="transparent" r="80" stroke="#b0c6ff" strokeDasharray="502" strokeDashoffset="150" strokeLinecap="round" strokeWidth="20"></circle>
-                <circle cx="96" cy="96" fill="transparent" r="80" stroke="#ffb59b" strokeDasharray="502" strokeDashoffset="400" strokeLinecap="round" strokeWidth="20"></circle>
+                {summary.categorias.map((cat) => {
+                  const percentage = totalDespesasCategoria > 0 ? cat.amount / totalDespesasCategoria : 0;
+                  const strokeDasharray = `${percentage * circumference} ${circumference}`;
+                  const strokeDashoffset = -currentOffset;
+                  currentOffset += percentage * circumference;
+                  
+                  return percentage > 0 ? (
+                    <circle 
+                      key={cat.name}
+                      cx="96" cy="96" fill="transparent" r="80" 
+                      stroke={cat.color} 
+                      strokeDasharray={strokeDasharray} 
+                      strokeDashoffset={strokeDashoffset} 
+                      strokeLinecap="round" 
+                      strokeWidth="20"
+                      className="transition-all duration-1000 ease-out"
+                    />
+                  ) : null;
+                })}
               </svg>
               <div className="absolute text-center">
                 <p className="text-[10px] uppercase tracking-widest text-[#c3c6d6]">Total</p>
-                <p className="text-xl font-bold font-dm-sans">R$ 3.1k</p>
+                <p className="text-xl font-bold font-dm-sans">
+                  {summary.isLoading ? '...' : `R$ ${formatCurrency(totalDespesasCategoria)}`}
+                </p>
               </div>
             </div>
             
             {/* Legend */}
             <div className="flex-1 w-full space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-[#b0c6ff]"></div>
-                  <span className="text-sm font-source-sans-3">Alimentação</span>
+              {summary.categorias.length > 0 ? (
+                summary.categorias.map((cat) => {
+                  const percentage = totalDespesasCategoria > 0 ? (cat.amount / totalDespesasCategoria) * 100 : 0;
+                  return (
+                    <div key={cat.name} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }}></div>
+                        <span className="text-sm font-source-sans-3">{cat.name}</span>
+                      </div>
+                      <span className="font-bold text-sm">{percentage.toFixed(0)}%</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-sm text-[#c3c6d6]">
+                  {summary.isLoading ? 'Carregando...' : 'Nenhum dado disponível.'}
                 </div>
-                <span className="font-bold text-sm">45%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-[#ffb59b]"></div>
-                  <span className="text-sm font-source-sans-3">Transporte</span>
-                </div>
-                <span className="font-bold text-sm">28%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-[#a1b4eb]"></div>
-                  <span className="text-sm font-source-sans-3">Lazer</span>
-                </div>
-                <span className="font-bold text-sm">15%</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full bg-[#424654]"></div>
-                  <span className="text-sm font-source-sans-3">Outros</span>
-                </div>
-                <span className="font-bold text-sm">12%</span>
-              </div>
+              )}
             </div>
           </div>
         </div>
