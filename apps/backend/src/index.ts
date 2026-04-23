@@ -35,6 +35,31 @@ app.get('/api/v1/health', (_req, res) => {
   });
 });
 
+// ─── Migrate endpoint (protegido por MIGRATE_SECRET) ───────────────────────
+// Permite aplicar migrations pendentes sem acesso direto ao banco.
+// Uso: POST /api/v1/migrate  com header  x-migrate-secret: <MIGRATE_SECRET>
+app.post('/api/v1/migrate', async (req, res) => {
+  const secret = process.env.MIGRATE_SECRET;
+  if (!secret || req.headers['x-migrate-secret'] !== secret) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { execSync } = require('child_process');
+    console.log('[Migrate] Iniciando prisma migrate deploy...');
+    const output = execSync('npx prisma migrate deploy', {
+      cwd: process.cwd(),
+      env: { ...process.env },
+      encoding: 'utf8',
+      timeout: 60000,
+    });
+    console.log('[Migrate] Concluído:', output);
+    res.status(200).json({ ok: true, output });
+  } catch (err: any) {
+    console.error('[Migrate] Erro:', err.message);
+    res.status(500).json({ ok: false, error: err.message, stderr: err.stderr });
+  }
+});
+
 // ─── Importações e configuração de rotas ────────────────────────────────────
 try {
   const { clerkAuth, requireAuthentication } = require('./middleware/auth.middleware');
