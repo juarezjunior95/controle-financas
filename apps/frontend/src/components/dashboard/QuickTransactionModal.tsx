@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { Modal } from "../ui/Modal";
-import { Category, getCategories, parseCurrency } from "@/lib/storage";
+import { parseCurrency, getCategories } from "@/lib/storage";
+import { useAuth } from "@/lib/auth";
+import { fetchAPI } from "@/lib/api";
+
+interface ApiCategory {
+  id: string;
+  name: string;
+  isSystem: boolean;
+}
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -26,76 +34,114 @@ interface TransactionModalProps {
   };
 }
 
+// Ícones e cores por nome de categoria (fallback visual)
+const CATEGORY_ICONS: Record<string, { icon: string; color: string }> = {
+  Alimentação:  { icon: "restaurant",       color: "#b0c6ff" },
+  Transporte:   { icon: "directions_car",   color: "#ffb59b" },
+  Moradia:      { icon: "home",             color: "#a1b4eb" },
+  Saúde:        { icon: "medical_services", color: "#ff8a80" },
+  Lazer:        { icon: "sports_esports",   color: "#b388ff" },
+  Estudos:      { icon: "school",           color: "#82b1ff" },
+  Salário:      { icon: "payments",         color: "#69f0ae" },
+  Freelance:    { icon: "work",             color: "#ffd740" },
+  Outros:       { icon: "more_horiz",       color: "#90a4ae" },
+};
+
+function getCategoryMeta(name: string) {
+  return CATEGORY_ICONS[name] ?? { icon: "category", color: "#90a4ae" };
+}
+
 export function TransactionModal({
   isOpen,
   onClose,
   onSave,
   initialData,
 }: TransactionModalProps) {
+  const { token } = useAuth();
+
   const [type, setType] = useState<"income" | "expense">("expense");
   const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [categories] = useState<Category[]>(getCategories());
 
+  const [categories, setCategories] = useState<ApiCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+
+  // Busca categorias da API; cai no localStorage como fallback
+  useEffect(() => {
+    if (!isOpen) return;
+
+    async function load() {
+      setLoadingCategories(true);
+      if (token) {
+        const { data } = await fetchAPI<ApiCategory[]>("/categories", { token });
+        if (data && data.length > 0) {
+          setCategories(data);
+          setLoadingCategories(false);
+          return;
+        }
+      }
+      // Fallback: categorias locais
+      const local = getCategories().map((c) => ({ id: c.id, name: c.name, isSystem: c.isDefault }));
+      setCategories(local);
+      setLoadingCategories(false);
+    }
+
+    load();
+  }, [isOpen, token]);
+
+  // Pré-preenche ao editar
   useEffect(() => {
     if (initialData && isOpen) {
       setType(initialData.type);
-      // Formata o valor de volta para string com vírgula para o input
-      setAmount(initialData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }).replace('R$', '').trim());
+      setAmount(
+        initialData.amount
+          .toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+          .replace("R$", "")
+          .trim()
+      );
       setDescription(initialData.description || "");
-      setDate(new Date(initialData.date).toISOString().split("T")[0]);
-      
-      // Tenta encontrar a categoria pelo nome para marcar no grid (simplificação temporária)
-      const cat = categories.find(c => c.name === initialData.category.name);
-      if (cat) setCategoryId(cat.id);
+      setDate(initialData.date.split("T")[0]);
+      setCategoryName(initialData.category.name);
     } else if (isOpen) {
-      // Reset para nova transação
       setType("expense");
       setAmount("");
       setDescription("");
-      setCategoryId("");
+      setCategoryName("");
       setDate(new Date().toISOString().split("T")[0]);
     }
-  }, [initialData, isOpen, categories]);
+  }, [initialData, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const numericAmount = parseCurrency(amount);
     if (numericAmount <= 0) {
       alert("Digite um valor válido");
       return;
     }
-
-    if (!categoryId) {
+    if (!categoryName) {
       alert("Selecione uma categoria");
       return;
     }
 
-    const selectedCategory = categories.find(c => c.id === categoryId);
-    
-    onSave({
-      type,
-      amount: numericAmount,
-      category: selectedCategory ? selectedCategory.name : "Outros",
-      description,
-      date,
-    });
-
+    onSave({ type, amount: numericAmount, category: categoryName, description, date });
     onClose();
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/[^\d,]/g, "");
-    setAmount(raw);
+    setAmount(e.target.value.replace(/[^\d,]/g, ""));
   };
 
-  const filteredCategories = categories.filter(c => {
-    const isIncomeCat = ["Salário", "Freelance", "Outros"].includes(c.name);
-    return type === "income" ? isIncomeCat : !isIncomeCat;
-  });
+  // Filtra categorias pelo tipo selecionado
+  const INCOME_CATEGORIES = ["Salário", "Freelance", "Outros"];
+  const filteredCategories = categories.filter((c) =>
+    type === "income" ? INCOME_CATEGORIES.includes(c.name) : !INCOME_CATEGORIES.includes(c.name)
+  );
+
+  // Se o filtro resultar vazio (categorias customizadas), mostra todas
+  const displayCategories = filteredCategories.length > 0 ? filteredCategories : categories;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "Editar Transação" : "Nova Transação"}>
@@ -104,7 +150,7 @@ export function TransactionModal({
         <div className="flex p-1 bg-background rounded-full">
           <button
             type="button"
-            onClick={() => { setType("expense"); setCategoryId(""); }}
+            onClick={() => { setType("expense"); setCategoryName(""); }}
             className={`flex-1 py-2.5 px-4 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
               type === "expense"
                 ? "bg-red-500/20 text-red-400"
@@ -116,7 +162,7 @@ export function TransactionModal({
           </button>
           <button
             type="button"
-            onClick={() => { setType("income"); setCategoryId(""); }}
+            onClick={() => { setType("income"); setCategoryName(""); }}
             className={`flex-1 py-2.5 px-4 rounded-full text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
               type === "income"
                 ? "bg-green-500/20 text-green-400"
@@ -130,21 +176,15 @@ export function TransactionModal({
 
         {/* Valor */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-            Valor
-          </label>
+          <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Valor</label>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold">
-              R$
-            </span>
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-bold">R$</span>
             <input
               type="text"
               value={amount}
               onChange={handleAmountChange}
               className={`w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-2xl font-bold focus:ring-2 transition-all text-right ${
-                type === "income" 
-                  ? "text-green-400 focus:ring-green-500" 
-                  : "text-red-400 focus:ring-red-500"
+                type === "income" ? "text-green-400 focus:ring-green-500" : "text-red-400 focus:ring-red-500"
               }`}
               placeholder="0,00"
               autoFocus
@@ -154,33 +194,38 @@ export function TransactionModal({
 
         {/* Categoria */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-            Categoria
-          </label>
-          <div className="grid grid-cols-3 gap-2">
-            {filteredCategories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setCategoryId(cat.id)}
-                className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
-                  categoryId === cat.id
-                    ? "bg-primary/20 ring-2 ring-primary"
-                    : "bg-surface-container-highest hover:bg-surface-container-high"
-                }`}
-              >
-                <span
-                  className="material-symbols-outlined"
-                  style={{ color: cat.color }}
-                >
-                  {cat.icon}
-                </span>
-                <span className="text-[10px] text-on-surface-variant truncate w-full text-center">
-                  {cat.name}
-                </span>
-              </button>
-            ))}
-          </div>
+          <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Categoria</label>
+          {loadingCategories ? (
+            <div className="flex items-center gap-2 text-on-surface-variant text-sm py-2">
+              <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+              Carregando categorias...
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {displayCategories.map((cat) => {
+                const meta = getCategoryMeta(cat.name);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCategoryName(cat.name)}
+                    className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all ${
+                      categoryName === cat.name
+                        ? "bg-primary/20 ring-2 ring-primary"
+                        : "bg-surface-container-highest hover:bg-surface-container-high"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined" style={{ color: meta.color }}>
+                      {meta.icon}
+                    </span>
+                    <span className="text-[10px] text-on-surface-variant truncate w-full text-center">
+                      {cat.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Descrição */}
@@ -199,9 +244,7 @@ export function TransactionModal({
 
         {/* Data */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
-            Data
-          </label>
+          <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Data</label>
           <input
             type="date"
             value={date}
@@ -227,9 +270,7 @@ export function TransactionModal({
                 : "bg-red-500 text-white hover:bg-red-600"
             }`}
           >
-            <span className="material-symbols-outlined text-lg">
-              {initialData ? "save" : "add"}
-            </span>
+            <span className="material-symbols-outlined text-lg">{initialData ? "save" : "add"}</span>
             {initialData ? "Salvar Alterações" : "Adicionar"}
           </button>
         </div>

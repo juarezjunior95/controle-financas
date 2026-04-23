@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { MonthSelector } from "@/components/dashboard/MonthSelector";
 import { EditBalanceModal } from "@/components/dashboard/EditBalanceModal";
 import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
@@ -54,6 +55,7 @@ function getCategoryColor(index: number): string {
 
 export default function DashboardPage() {
   const { token } = useAuth();
+  const router = useRouter();
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
@@ -151,6 +153,7 @@ export default function DashboardPage() {
             : prev
         );
         setShowBalanceModal(false);
+        router.refresh();
       }
       setIsSavingBalance(false);
     },
@@ -182,6 +185,7 @@ export default function DashboardPage() {
       } else {
         setShowTransactionModal(false);
         fetchData();
+        router.refresh();
       }
     },
     [token, fetchData]
