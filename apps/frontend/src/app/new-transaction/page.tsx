@@ -161,12 +161,13 @@ export default function NewTransactionPage() {
 
           <form className="space-y-8 flex-1" onSubmit={handleSubmit}>
             {/* Toggle: Income / Expense */}
-            <div className="flex p-1 bg-surface-container-highest rounded-full w-full max-w-xs mx-auto md:mx-0">
+            <div className="flex p-1 bg-surface-container-highest rounded-full w-full max-w-xs mx-auto md:mx-0" role="group" aria-label="Tipo de transação">
               <button
                 type="button"
                 disabled={loading}
                 onClick={() => setType("expense")}
-                className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 ${type === 'expense' ? 'bg-error text-on-error shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
+                aria-pressed={type === 'expense'}
+                className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 focus-visible:ring-2 focus-visible:ring-primary outline-none ${type === 'expense' ? 'bg-error text-on-error shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
               >
                 Despesa
               </button>
@@ -174,7 +175,8 @@ export default function NewTransactionPage() {
                 type="button"
                 disabled={loading}
                 onClick={() => setType("income")}
-                className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 ${type === 'income' ? 'bg-error text-on-error shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
+                aria-pressed={type === 'income'}
+                className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 focus-visible:ring-2 focus-visible:ring-primary outline-none ${type === 'income' ? 'bg-error text-on-error shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
               >
                 Receita
               </button>
@@ -182,11 +184,12 @@ export default function NewTransactionPage() {
 
             {/* Input: Value (Currency) */}
             <div className="group">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2 ml-1">Valor da Transação</label>
+              <label htmlFor="amount" className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2 ml-1">Valor da Transação</label>
               <div className="relative flex items-baseline">
                 <span className="text-2xl font-headline font-light text-primary mr-2">R$</span>
                 <input
-                  className="bg-transparent border-none p-0 text-5xl md:text-6xl font-headline font-black text-on-surface placeholder:text-surface-variant focus:ring-0 w-full tracking-tighter"
+                  id="amount"
+                  className="bg-transparent border-none p-0 text-5xl md:text-6xl font-headline font-black text-on-surface placeholder:text-surface-variant focus:ring-2 focus:ring-primary w-full tracking-tighter outline-none"
                   placeholder="0,00"
                   type="text"
                   required
@@ -202,11 +205,12 @@ export default function NewTransactionPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Date Picker */}
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Data</label>
+                <label htmlFor="date" className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Data</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-xl">calendar_today</span>
                   <input
-                    className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none"
+                    id="date"
+                    className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary appearance-none outline-none"
                     type="date"
                     required
                     disabled={loading}
@@ -218,11 +222,12 @@ export default function NewTransactionPage() {
 
               {/* Category Dropdown */}
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Categoria</label>
+                <label htmlFor="category" className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Categoria</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary text-xl">category</span>
                   <select
-                    className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-10 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
+                    id="category"
+                    className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-10 text-on-surface font-medium focus:ring-2 focus:ring-primary appearance-none cursor-pointer outline-none"
                     value={category}
                     disabled={loading || categoriesLoading}
                     onChange={(e) => setCategory(e.target.value)}
@@ -246,11 +251,12 @@ export default function NewTransactionPage() {
 
             {/* Description / Note */}
             <div className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Observação</label>
+              <label htmlFor="description" className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant ml-1">Observação</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-4 top-4 text-primary text-xl">notes</span>
                 <textarea
-                  className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary/20 placeholder:text-on-surface-variant/40 resize-none custom-scrollbar"
+                  id="description"
+                  className="w-full bg-surface-container-high border-none rounded-xl py-4 pl-12 pr-4 text-on-surface font-medium focus:ring-2 focus:ring-primary placeholder:text-on-surface-variant/40 resize-none custom-scrollbar outline-none"
                   placeholder="Ex: Almoço com a equipe de design..."
                   rows={3}
                   disabled={loading}
@@ -277,7 +283,7 @@ export default function NewTransactionPage() {
             {/* Actions */}
             <div className="pt-6 flex flex-col md:flex-row-reverse gap-4">
               <button
-                className="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black py-4 rounded-full shadow-[0_8px_20px_rgba(0,88,203,0.3)] hover:scale-[1.02] active:scale-95 transition-all duration-200 uppercase tracking-widest text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale"
+                className="flex-1 bg-gradient-to-r from-primary to-primary-container text-on-primary font-black py-4 rounded-full shadow-[0_8px_20px_rgba(0,88,203,0.3)] hover:scale-[1.02] active:scale-95 transition-all duration-200 uppercase tracking-widest text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale focus-visible:ring-2 focus-visible:ring-primary outline-none"
                 type="submit"
                 disabled={loading}
               >
@@ -294,7 +300,7 @@ export default function NewTransactionPage() {
                 type="button"
                 disabled={loading}
                 onClick={() => router.back()}
-                className="flex-1 border border-outline-variant/30 text-on-surface-variant font-bold py-4 rounded-full hover:bg-surface-container-highest transition-colors uppercase tracking-widest text-sm"
+                className="flex-1 border border-outline-variant/30 text-on-surface-variant font-bold py-4 rounded-full hover:bg-surface-container-highest transition-colors uppercase tracking-widest text-sm focus-visible:ring-2 focus-visible:ring-primary outline-none"
               >
                 Cancelar
               </button>

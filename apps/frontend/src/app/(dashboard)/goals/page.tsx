@@ -49,14 +49,14 @@ export default function GoalsPage() {
     }
   }, [isAuthenticated, token, loadGoals]);
 
-  const handleUpdateProgress = async (id: string, amount: number) => {
+  const handleUpdateProgress = async (id: string, amount: number, mode: 'increment' | 'set' = 'increment') => {
     if (!token) return;
     
     setIsUpdating(true);
     const res = await fetchAPI(`/goals/${id}/progress`, {
       method: 'PATCH',
       token,
-      body: JSON.stringify({ amount }),
+      body: JSON.stringify({ amount, mode }),
     });
     setIsUpdating(false);
 
@@ -118,7 +118,7 @@ export default function GoalsPage() {
         </div>
         <Link 
           href="/new-goal"
-          className="bg-primary text-on-primary px-8 py-3 rounded-full font-bold shadow-lg shadow-primary/20 flex items-center gap-2 self-start md:self-auto hover:opacity-90 active:scale-95 transition-all"
+          className="bg-primary text-on-primary px-8 py-3 rounded-full font-bold shadow-lg shadow-primary/20 flex items-center gap-2 self-start md:self-auto hover:opacity-90 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-primary outline-none"
         >
           <Plus className="w-5 h-5" />
           Nova Meta

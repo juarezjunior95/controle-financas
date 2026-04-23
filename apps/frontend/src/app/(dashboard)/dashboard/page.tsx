@@ -247,7 +247,7 @@ export default function DashboardPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setShowTransactionModal(true)}
-            className="bg-primary text-on-primary px-5 py-2.5 rounded-full text-sm font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg"
+            className="bg-primary text-on-primary px-5 py-2.5 rounded-full text-sm font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg focus-visible:ring-2 focus-visible:ring-primary outline-none"
           >
             <span className="material-symbols-outlined text-lg">add</span>
             Nova Transação
@@ -266,8 +266,9 @@ export default function DashboardPage() {
             </div>
             <button
               onClick={() => setShowBalanceModal(true)}
-              className="p-2 rounded-full bg-[#b0c6ff]/10 hover:bg-[#b0c6ff]/30 transition-colors"
+              className="p-2 rounded-full bg-[#b0c6ff]/10 hover:bg-[#b0c6ff]/30 transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
               title="Editar saldo inicial"
+              aria-label="Editar saldo inicial"
             >
               <span className="material-symbols-outlined text-[#b0c6ff] text-sm">edit</span>
             </button>

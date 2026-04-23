@@ -142,40 +142,39 @@ export class GoalService {
   }
 
   /**
-   * Atualiza o progresso da meta (soma ou subtrai valor)
+   * Atualiza o progresso da meta.
+   * mode "increment" (padrão): soma `amount` ao valor atual.
+   * mode "set": define `amount` como o valor absoluto guardado.
    */
-  static async updateProgress(userId: string, id: string, amount: number) {
+  static async updateProgress(userId: string, id: string, amount: number, mode: 'increment' | 'set' = 'increment') {
     const user = await prisma.user.findUnique({ where: { clerkId: userId } });
     if (!user) throw new Error('Usuário não encontrado.');
 
     const goal = await prisma.goal.findUnique({ where: { id } });
     if (!goal || goal.userId !== user.id) throw new Error('Meta não encontrada.');
 
-    let newAmount = Number(goal.currentAmount) + amount;
-
-    if (newAmount < 0) {
-      throw new Error('O saldo da meta não pode ser negativo.');
-    }
-
-    // Define comportamento: current_amount nunca pode ser maior que target_amount
     const target = Number(goal.targetAmount);
-    if (newAmount > target) {
-      newAmount = target;
+
+    let newAmount: number;
+    if (mode === 'set') {
+      if (amount < 0) throw new Error('O valor guardado não pode ser negativo.');
+      newAmount = Math.min(amount, target);
+    } else {
+      newAmount = Number(goal.currentAmount) + amount;
+      if (newAmount < 0) throw new Error('O saldo da meta não pode ser negativo.');
+      if (newAmount > target) newAmount = target;
     }
 
     const status = newAmount >= target ? 'completed' : 'active';
 
     const updated = await prisma.goal.update({
       where: { id },
-      data: {
-        currentAmount: newAmount,
-        status,
-      },
+      data: { currentAmount: newAmount, status },
     });
 
     return {
       ...updated,
-      progress: this.calculateProgress(newAmount, Number(goal.targetAmount)),
+      progress: this.calculateProgress(newAmount, target),
     };
   }
 

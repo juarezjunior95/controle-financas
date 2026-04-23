@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Goal, GoalCard } from "./GoalCard";
-import { UpdateProgressModal } from "./UpdateProgressModal";
+import { UpdateProgressModal, type ProgressMode } from "./UpdateProgressModal";
 import { EditGoalModal } from "./EditGoalModal";
 import { DeleteGoalModal } from "./DeleteGoalModal";
 import Link from "next/link";
@@ -10,7 +10,7 @@ import { Plus, Target, ArrowRight, AlertTriangle } from "lucide-react";
 
 interface GoalsListProps {
   goals: Goal[];
-  onUpdateProgress: (id: string, amount: number) => void;
+  onUpdateProgress: (id: string, amount: number, mode: ProgressMode) => void;
   onUpdateGoal: (id: string, data: Partial<Goal>) => void;
   onDeleteGoal: (id: string) => void;
   isUpdating: boolean;
@@ -18,12 +18,12 @@ interface GoalsListProps {
 }
 
 export function GoalsList({ goals, onUpdateProgress, onUpdateGoal, onDeleteGoal, isUpdating, isDeleting }: GoalsListProps) {
-  const [selectedGoalForProgress, setSelectedGoalForProgress] = useState<{ id: string, title: string } | null>(null);
+  const [selectedGoalForProgress, setSelectedGoalForProgress] = useState<{ id: string, title: string, currentAmount: number, targetAmount: number } | null>(null);
   const [selectedGoalForEdit, setSelectedGoalForEdit] = useState<Goal | null>(null);
   const [selectedGoalForDelete, setSelectedGoalForDelete] = useState<Goal | null>(null);
 
-  const handleUpdateProgressClick = (id: string, title: string) => {
-    setSelectedGoalForProgress({ id, title });
+  const handleUpdateProgressClick = (id: string, title: string, currentAmount: number, targetAmount: number) => {
+    setSelectedGoalForProgress({ id, title, currentAmount, targetAmount });
   };
 
   const handleEditClick = (goal: Goal) => {
@@ -34,9 +34,9 @@ export function GoalsList({ goals, onUpdateProgress, onUpdateGoal, onDeleteGoal,
     setSelectedGoalForDelete(goal);
   };
 
-  const handleConfirmProgress = async (amount: number) => {
+  const handleConfirmProgress = async (amount: number, mode: ProgressMode) => {
     if (selectedGoalForProgress) {
-      await onUpdateProgress(selectedGoalForProgress.id, amount);
+      await onUpdateProgress(selectedGoalForProgress.id, amount, mode);
       setSelectedGoalForProgress(null);
     }
   };
@@ -90,6 +90,8 @@ export function GoalsList({ goals, onUpdateProgress, onUpdateGoal, onDeleteGoal,
         <UpdateProgressModal
           goalId={selectedGoalForProgress.id}
           goalTitle={selectedGoalForProgress.title}
+          currentAmount={selectedGoalForProgress.currentAmount}
+          targetAmount={selectedGoalForProgress.targetAmount}
           isOpen={!!selectedGoalForProgress}
           onClose={() => setSelectedGoalForProgress(null)}
           onConfirm={handleConfirmProgress}

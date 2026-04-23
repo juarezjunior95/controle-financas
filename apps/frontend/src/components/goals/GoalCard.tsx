@@ -32,7 +32,7 @@ export interface Goal {
 
 interface GoalCardProps {
   goal: Goal;
-  onUpdateClick: (id: string, title: string) => void;
+  onUpdateClick: (id: string, title: string, currentAmount: number, targetAmount: number) => void;
   onEditClick: (goal: Goal) => void;
   onDeleteClick: (goal: Goal) => void;
 }
@@ -157,7 +157,7 @@ export function GoalCard({ goal, onUpdateClick, onEditClick, onDeleteClick }: Go
       {/* Action Button */}
       {!isCompleted && (
         <button 
-          onClick={() => onUpdateClick(goal.id, goal.title)}
+          onClick={() => onUpdateClick(goal.id, goal.title, goal.current_amount, goal.target_amount)}
           className="mt-6 w-full py-3 bg-surface-container-highest rounded-xl text-on-surface font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-sm"
         >
           <span>Atualizar Progresso</span>

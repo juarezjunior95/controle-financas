@@ -193,7 +193,7 @@ export class GoalController {
     try {
       const userId = (req as AuthenticatedRequest).auth?.userId;
       const { id } = req.params;
-      const { amount } = req.body;
+      const { amount, mode } = req.body;
 
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -204,7 +204,8 @@ export class GoalController {
         });
       }
 
-      const updated = await GoalService.updateProgress(userId, id, amount);
+      const updateMode = mode === 'set' ? 'set' : 'increment';
+      const updated = await GoalService.updateProgress(userId, id, amount, updateMode);
 
       res.status(200).json({
         message: 'Progresso atualizado com sucesso',

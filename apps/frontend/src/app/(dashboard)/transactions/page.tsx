@@ -212,7 +212,7 @@ export default function TransactionsPage() {
         </div>
         <Link
           href="/new-transaction"
-          className="bg-primary-container text-on-primary-container px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-95 transition-all shadow-lg text-sm"
+          className="bg-primary-container text-on-primary-container px-6 py-3 rounded-full font-bold flex items-center justify-center gap-2 hover:scale-95 transition-all shadow-lg text-sm focus-visible:ring-2 focus-visible:ring-primary outline-none"
         >
           <span className="material-symbols-outlined text-xl">add_circle</span>
           <span className="hidden sm:inline">Novo Lançamento</span>
@@ -227,7 +227,8 @@ export default function TransactionsPage() {
               search
             </span>
             <input
-              className="w-full bg-surface-container-high border-none rounded-2xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary transition-all"
+              aria-label="Pesquisar transações"
+              className="w-full bg-surface-container-high border-none rounded-2xl py-3.5 pl-12 pr-4 text-on-surface placeholder:text-on-surface-variant/40 focus:ring-1 focus:ring-primary transition-all outline-none"
               placeholder="Pesquisar transações..."
               type="text"
               value={searchQuery}
@@ -236,27 +237,30 @@ export default function TransactionsPage() {
           </div>
           <div className="lg:col-span-6 grid grid-cols-3 gap-3">
             <select
+              aria-label="Filtrar por mês"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary"
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none"
             >
               {months.map((m, i) => (
                 <option key={m} value={i}>{m}</option>
               ))}
             </select>
             <select
+              aria-label="Filtrar por ano"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary"
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none"
             >
               {years.map((y) => (
                 <option key={y} value={y}>{y}</option>
               ))}
             </select>
             <select
+              aria-label="Filtrar por tipo"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary"
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none"
             >
               <option value="all">Tipo</option>
               <option value="income">Entradas</option>
@@ -370,16 +374,18 @@ export default function TransactionsPage() {
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => setEditingTransaction(tx)}
-                            className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-primary transition-colors"
+                            className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-primary transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
                             title="Editar"
+                            aria-label="Editar transação"
                           >
                             <span className="material-symbols-outlined text-sm">edit</span>
                           </button>
                           <button
                             onClick={() => handleDelete(tx.id)}
                             disabled={deletingId === tx.id}
-                            className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-error transition-colors disabled:opacity-40"
+                            className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-error transition-colors disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-error outline-none"
                             title="Excluir"
+                            aria-label="Excluir transação"
                           >
                             {deletingId === tx.id ? (
                               <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>

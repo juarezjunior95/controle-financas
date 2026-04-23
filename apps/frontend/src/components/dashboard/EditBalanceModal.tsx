@@ -41,7 +41,7 @@ export function EditBalanceModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Editar Saldo Inicial">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
+          <label htmlFor="edit-balance" className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">
             Saldo Inicial
           </label>
           <div className="relative">
@@ -49,10 +49,11 @@ export function EditBalanceModal({
               R$
             </span>
             <input
+              id="edit-balance"
               type="text"
               value={value}
               onChange={handleChange}
-              className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface text-2xl font-bold focus:ring-2 focus:ring-primary transition-all text-right"
+              className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-4 text-on-surface text-2xl font-bold focus:ring-2 focus:ring-primary transition-all text-right outline-none"
               placeholder="0,00"
               autoFocus
             />

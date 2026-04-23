@@ -14,6 +14,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* WCAG 2.1 AA – visible keyboard focus for all interactive elements */
+*:focus-visible {
+  outline: 2px solid #b0c6ff;
+  outline-offset: 2px;
+}
+
 @layer utilities {
   /* Utility class for primary CTA gradient mentioned in design specs */
   .bg-gradient-action {
