@@ -46,8 +46,12 @@ app.post('/api/v1/migrate', async (_req, res) => {
   }
   try {
     const { Pool } = require('pg');
+    // Remove sslmode da URL (pg v8 interpreta sslmode=require como verify-full)
+    // e passa ssl explicitamente, igual ao prisma.ts
+    const rawUrl = process.env.DATABASE_URL || '';
+    const cleanUrl = rawUrl.replace(/[?&]sslmode=[^&]*/g, '').replace(/\?$/, '');
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: cleanUrl,
       ssl: { rejectUnauthorized: false },
     });
     const client = await pool.connect();
