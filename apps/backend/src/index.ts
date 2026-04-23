@@ -36,27 +36,58 @@ app.get('/api/v1/health', (_req, res) => {
 });
 
 // ─── Migrate endpoint (protegido por MIGRATE_SECRET) ───────────────────────
-// Permite aplicar migrations pendentes sem acesso direto ao banco.
+// Aplica a migration da coluna initial_balance diretamente via SQL,
+// sem depender do Prisma CLI (inviável em Vercel serverless).
 // Uso: POST /api/v1/migrate  com header  x-migrate-secret: <MIGRATE_SECRET>
-app.post('/api/v1/migrate', async (req, res) => {
+app.post('/api/v1/migrate', async (_req, res) => {
   const secret = process.env.MIGRATE_SECRET;
-  if (!secret || req.headers['x-migrate-secret'] !== secret) {
+  if (!secret || _req.headers['x-migrate-secret'] !== secret) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   try {
-    const { execSync } = require('child_process');
-    console.log('[Migrate] Iniciando prisma migrate deploy...');
-    const output = execSync('npx prisma migrate deploy', {
-      cwd: process.cwd(),
-      env: { ...process.env },
-      encoding: 'utf8',
-      timeout: 60000,
-    });
-    console.log('[Migrate] Concluído:', output);
-    res.status(200).json({ ok: true, output });
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    console.log('[Migrate] Aplicando migration SQL direta...');
+
+    // Adiciona a coluna initial_balance se não existir
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "users"
+      ADD COLUMN IF NOT EXISTS "initial_balance" DECIMAL(15,2) NOT NULL DEFAULT 0;
+    `);
+
+    // Registra a migration na tabela de controle do Prisma (evita re-aplicação)
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
+        id VARCHAR(36) NOT NULL,
+        checksum VARCHAR(64) NOT NULL,
+        finished_at TIMESTAMPTZ,
+        migration_name VARCHAR(255) NOT NULL,
+        logs TEXT,
+        rolled_back_at TIMESTAMPTZ,
+        started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        applied_steps_count INTEGER NOT NULL DEFAULT 0,
+        CONSTRAINT "_prisma_migrations_pkey" PRIMARY KEY (id)
+      );
+    `);
+
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "_prisma_migrations" (id, checksum, finished_at, migration_name, applied_steps_count)
+      VALUES (
+        gen_random_uuid()::text,
+        'manual',
+        now(),
+        '20260413000000_add_initial_balance_to_user',
+        1
+      )
+      ON CONFLICT DO NOTHING;
+    `);
+
+    await prisma.$disconnect();
+    console.log('[Migrate] Migration aplicada com sucesso.');
+    res.status(200).json({ ok: true, message: 'Migration aplicada com sucesso.' });
   } catch (err: any) {
     console.error('[Migrate] Erro:', err.message);
-    res.status(500).json({ ok: false, error: err.message, stderr: err.stderr });
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
