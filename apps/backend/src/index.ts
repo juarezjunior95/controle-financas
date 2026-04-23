@@ -36,8 +36,7 @@ app.get('/api/v1/health', (_req, res) => {
 });
 
 // ─── Migrate endpoint (protegido por MIGRATE_SECRET) ───────────────────────
-// Aplica a migration da coluna initial_balance diretamente via SQL,
-// sem depender do Prisma CLI (inviável em Vercel serverless).
+// Usa o prisma já configurado (com SSL correto) para aplicar a migration via SQL raw.
 // Uso: POST /api/v1/migrate  com header  x-migrate-secret: <MIGRATE_SECRET>
 app.post('/api/v1/migrate', async (_req, res) => {
   const secret = process.env.MIGRATE_SECRET;
@@ -45,24 +44,15 @@ app.post('/api/v1/migrate', async (_req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   try {
-    const { Pool } = require('pg');
-    // Remove sslmode da URL (pg v8 interpreta sslmode=require como verify-full)
-    // e passa ssl explicitamente, igual ao prisma.ts
-    const rawUrl = process.env.DATABASE_URL || '';
-    const cleanUrl = rawUrl.replace(/[?&]sslmode=[^&]*/g, '').replace(/\?$/, '');
-    const pool = new Pool({
-      connectionString: cleanUrl,
-      ssl: { rejectUnauthorized: false },
-    });
-    const client = await pool.connect();
-    console.log('[Migrate] Aplicando migration SQL direta via pg...');
+    const { prisma } = require('./config/prisma');
+    console.log('[Migrate] Aplicando migration SQL via prisma.$executeRawUnsafe...');
 
-    await client.query(`
+    await prisma.$executeRawUnsafe(`
       ALTER TABLE "users"
       ADD COLUMN IF NOT EXISTS "initial_balance" DECIMAL(15,2) NOT NULL DEFAULT 0;
     `);
 
-    await client.query(`
+    await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
         id VARCHAR(36) NOT NULL,
         checksum VARCHAR(64) NOT NULL,
@@ -76,7 +66,7 @@ app.post('/api/v1/migrate', async (_req, res) => {
       );
     `);
 
-    await client.query(`
+    await prisma.$executeRawUnsafe(`
       INSERT INTO "_prisma_migrations" (id, checksum, finished_at, migration_name, applied_steps_count)
       SELECT gen_random_uuid()::text, 'manual', now(), '20260413000000_add_initial_balance_to_user', 1
       WHERE NOT EXISTS (
@@ -85,8 +75,6 @@ app.post('/api/v1/migrate', async (_req, res) => {
       );
     `);
 
-    client.release();
-    await pool.end();
     console.log('[Migrate] Migration aplicada com sucesso.');
     res.status(200).json({ ok: true, message: 'Migration aplicada com sucesso.' });
   } catch (err: any) {
