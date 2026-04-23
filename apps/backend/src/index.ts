@@ -45,18 +45,17 @@ app.post('/api/v1/migrate', async (_req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
-    console.log('[Migrate] Aplicando migration SQL direta...');
+    const { Pool } = require('pg');
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const client = await pool.connect();
+    console.log('[Migrate] Aplicando migration SQL direta via pg...');
 
-    // Adiciona a coluna initial_balance se não existir
-    await prisma.$executeRawUnsafe(`
+    await client.query(`
       ALTER TABLE "users"
       ADD COLUMN IF NOT EXISTS "initial_balance" DECIMAL(15,2) NOT NULL DEFAULT 0;
     `);
 
-    // Registra a migration na tabela de controle do Prisma (evita re-aplicação)
-    await prisma.$executeRawUnsafe(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
         id VARCHAR(36) NOT NULL,
         checksum VARCHAR(64) NOT NULL,
@@ -70,19 +69,17 @@ app.post('/api/v1/migrate', async (_req, res) => {
       );
     `);
 
-    await prisma.$executeRawUnsafe(`
+    await client.query(`
       INSERT INTO "_prisma_migrations" (id, checksum, finished_at, migration_name, applied_steps_count)
-      VALUES (
-        gen_random_uuid()::text,
-        'manual',
-        now(),
-        '20260413000000_add_initial_balance_to_user',
-        1
-      )
-      ON CONFLICT DO NOTHING;
+      SELECT gen_random_uuid()::text, 'manual', now(), '20260413000000_add_initial_balance_to_user', 1
+      WHERE NOT EXISTS (
+        SELECT 1 FROM "_prisma_migrations"
+        WHERE migration_name = '20260413000000_add_initial_balance_to_user'
+      );
     `);
 
-    await prisma.$disconnect();
+    client.release();
+    await pool.end();
     console.log('[Migrate] Migration aplicada com sucesso.');
     res.status(200).json({ ok: true, message: 'Migration aplicada com sucesso.' });
   } catch (err: any) {
