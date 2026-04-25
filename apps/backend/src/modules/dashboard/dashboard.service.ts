@@ -4,7 +4,7 @@ export class DashboardService {
   /**
    * Calcula o sumário financeiro do usuário (Saldo Total, Receitas e Despesas do mês).
    */
-  static async getSummary(clerkId: string) {
+  static async getSummary(clerkId: string, filters?: { month?: number; year?: number }) {
     try {
       // 1. Encontrar o usuário local pelo clerkId
       const user = await prisma.user.findUnique({
@@ -16,10 +16,18 @@ export class DashboardService {
       }
 
       const now = new Date();
+      let filterYear = now.getFullYear();
+      let filterMonthIndex = now.getMonth();
+
+      if (filters?.month !== undefined && filters?.year !== undefined) {
+        filterYear = filters.year;
+        filterMonthIndex = filters.month - 1; // Frontend sends 1-12
+      }
+
       // Início do mês atual (Ano, Mês, Dia 1)
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthStart = new Date(filterYear, filterMonthIndex, 1);
       // Fim do mês atual (Ano, Próximo Mês, Dia 0 -> último dia do mês atual)
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      const monthEnd = new Date(filterYear, filterMonthIndex + 1, 0, 23, 59, 59, 999);
 
       // 2. Cálculo do Saldo Total (Acumulado Histórico)
       const totalSummary = await prisma.transaction.groupBy({

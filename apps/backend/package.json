@@ -12,10 +12,15 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
-    "check-db": "npx tsx check-pg.ts"
+    "check-db": "npx tsx check-pg.ts",
+    "test": "jest",
+    "test:unit": "jest --selectProjects unit",
+    "test:integration": "jest --selectProjects integration",
+    "test:acceptance": "jest --selectProjects acceptance"
   },
   "dependencies": {
     "@clerk/express": "^2.0.7",
+    "@google/genai": "^1.50.1",
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
     "@types/jsonwebtoken": "^9.0.10",
@@ -24,13 +29,23 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.13.0",
-    "prisma": "^7.6.0"
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
+    "prisma": "^7.6.0",
+    "uuid": "^14.0.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
-    "@types/node": "^20.11.24",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.0.0",
     "@types/pg": "^8.11.0",
+    "@types/supertest": "^7.2.0",
+    "@types/uuid": "^10.0.0",
+    "jest": "^30.3.0",
+    "pino-pretty": "^13.1.3",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   }

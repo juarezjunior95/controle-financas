@@ -19,7 +19,12 @@ export class DashboardController {
         });
       }
 
-      const summary = await DashboardService.getSummary(clerkId);
+      const { month, year } = req.query;
+
+      const summary = await DashboardService.getSummary(clerkId, {
+        month: month ? Number(month) : undefined,
+        year: year ? Number(year) : undefined,
+      });
 
       return res.status(200).json({ data: summary });
     } catch (error: any) {

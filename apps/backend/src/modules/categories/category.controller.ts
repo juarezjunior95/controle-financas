@@ -157,7 +157,11 @@ export class CategoryController {
         res.status(403).json({ error: { code: 'FORBIDDEN', message: error.message } });
         return;
       }
-      // Outros erros como violação de constraint (se a categoria está atrelada a transações)
+      if (error.message.includes('transações vinculadas')) {
+        res.status(400).json({ error: { code: 'BAD_REQUEST', message: error.message } });
+        return;
+      }
+      // Outros erros como violação de constraint genérica
       res.status(500).json({ error: { code: 'INTERNAL_SERVER_ERROR', message: error.message } });
     }
   }

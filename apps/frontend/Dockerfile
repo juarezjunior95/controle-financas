@@ -1,5 +1,4 @@
 FROM node:lts-alpine AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Instalação de dependências global para o monorepo

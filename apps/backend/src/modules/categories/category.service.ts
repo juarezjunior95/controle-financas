@@ -227,6 +227,14 @@ export class CategoryService {
       throw new Error('Categorias do sistema não podem ser apagadas.');
     }
 
+    const linkedTransactions = await prisma.transaction.count({
+      where: { categoryId: id },
+    });
+
+    if (linkedTransactions > 0) {
+      throw new Error('Não é possível excluir esta categoria porque existem transações vinculadas a ela.');
+    }
+
     const result = await prisma.category.deleteMany({
       where: {
         id,

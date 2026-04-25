@@ -167,7 +167,7 @@ export default function TransactionsPage() {
       else expense += val;
 
       if (!groups[dateKey]) {
-        groups[dateKey] = { dateLabel: formatDateLabel(tx.occurredOn), items: [], total: 0 };
+        groups[dateKey] = { dateLabel: formatDateLabel(dateKey), items: [], total: 0 };
       }
       groups[dateKey].items.push(tx);
       groups[dateKey].total += tx.type === "income" ? val : -val;

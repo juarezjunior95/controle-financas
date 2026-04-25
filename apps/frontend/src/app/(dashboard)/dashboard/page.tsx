@@ -5,7 +5,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { MonthSelector } from "@/components/dashboard/MonthSelector";
 import { EditBalanceModal } from "@/components/dashboard/EditBalanceModal";
-import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
+import { FinancialInsightsCard } from "@/components/dashboard/FinancialInsightsCard";
+
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/storage";
@@ -67,7 +68,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showBalanceModal, setShowBalanceModal] = useState(false);
-  const [showTransactionModal, setShowTransactionModal] = useState(false);
+
   const [isSavingBalance, setIsSavingBalance] = useState(false);
 
   // ─── Fetch dashboard summary + transactions do mês ─────────────────────────
@@ -80,7 +81,7 @@ export default function DashboardPage() {
     const year = selectedYear;
 
     const [summaryResult, txResult] = await Promise.all([
-      fetchAPI<DashboardSummary>("/dashboard/summary", { token }),
+      fetchAPI<DashboardSummary>(`/dashboard/summary?month=${month}&year=${year}`, { token }),
       fetchAPI<Transaction[]>(`/transactions?month=${month}&year=${year}`, { token }),
     ]);
 
@@ -160,36 +161,7 @@ export default function DashboardPage() {
     [token]
   );
 
-  const handleAddTransaction = useCallback(
-    async (data: {
-      type: "income" | "expense";
-      amount: number;
-      category: string;
-      description: string;
-      date: string;
-    }) => {
-      if (!token) return;
-      const { error: err } = await fetchAPI("/transactions", {
-        method: "POST",
-        token,
-        body: JSON.stringify({
-          type: data.type,
-          amount: data.amount,
-          category: data.category,
-          description: data.description,
-          date: data.date,
-        }),
-      });
-      if (err) {
-        alert("Erro ao criar transação: " + err.message);
-      } else {
-        setShowTransactionModal(false);
-        fetchData();
-        router.refresh();
-      }
-    },
-    [token, fetchData]
-  );
+
 
   const handleMonthChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
@@ -245,20 +217,20 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setShowTransactionModal(true)}
+          <Link
+            href="/new-transaction"
             className="bg-primary text-on-primary px-5 py-2.5 rounded-full text-sm font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg focus-visible:ring-2 focus-visible:ring-primary outline-none"
           >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Nova Transação
-          </button>
+            <span className="material-symbols-outlined text-lg">add_circle</span>
+            Novo Lançamento
+          </Link>
         </div>
       </div>
 
       {/* Bento Grid: Cards principais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {/* Saldo Atual */}
-        <div className="md:col-span-1 bg-gradient-to-br from-[#b0c6ff]/10 to-transparent p-8 rounded-xl border border-[#b0c6ff]/10 shadow-[0_24px_48px_rgba(0,0,0,0.4)] relative overflow-hidden group">
+        <div className="bg-gradient-to-br from-[#b0c6ff]/10 to-transparent p-8 rounded-xl border border-[#b0c6ff]/10 shadow-[0_24px_48px_rgba(0,0,0,0.4)] relative overflow-hidden group">
           <div className="absolute -top-4 -right-4 w-32 h-32 bg-[#b0c6ff]/5 rounded-full blur-3xl pointer-events-none" />
           <div className="flex justify-between items-start mb-8 relative z-10">
             <div className="p-3 bg-[#b0c6ff]/20 rounded-2xl text-[#b0c6ff]">
@@ -322,12 +294,63 @@ export default function DashboardPage() {
             </h3>
           </div>
         </div>
+
+        {/* Balanço do Mês */}
+        <div className="bg-[#1c1b1b] p-8 rounded-xl border border-[#424654]/10 flex flex-col hover:bg-[#252424] transition-colors min-h-[220px]">
+          <div className="flex justify-between items-start mb-6">
+            <h4 className="font-dm-sans text-sm font-bold text-[#e5e2e1]">Balanço do Mês</h4>
+            <span
+              className="material-symbols-outlined text-sm"
+              style={{
+                color: income - expense >= 0 ? "#69f0ae" : "#ff8a80",
+                fontVariationSettings: "'FILL' 1",
+              }}
+            >
+              {income - expense >= 0 ? "trending_up" : "trending_down"}
+            </span>
+          </div>
+
+          <div className="flex-1">
+            <p className="text-[#c3c6d6] text-[10px] mb-1">
+              {income - expense >= 0 ? "Você economizou" : "Você gastou a mais"}
+            </p>
+            <div className="flex items-baseline gap-1 mb-4">
+              <span className={`text-lg font-bold font-dm-sans ${income - expense >= 0 ? "text-green-400" : "text-red-400"}`}>R$</span>
+              <h3
+                className={`text-3xl font-bold font-dm-sans tracking-tight ${
+                  income - expense >= 0 ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {formatCurrency(Math.abs(income - expense)).replace("R$", "").trim()}
+              </h3>
+            </div>
+
+            <div className="space-y-1 mb-6">
+              <p className="text-[#c3c6d6] text-[10px] flex justify-between">
+                <span>Receitas:</span>
+                <span className="text-on-surface">{formatCurrency(income)}</span>
+              </p>
+              <p className="text-[#c3c6d6] text-[10px] flex justify-between">
+                <span>Despesas:</span>
+                <span className="text-on-surface">{formatCurrency(expense)}</span>
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/goals"
+            className="text-[#b0c6ff] text-[11px] font-bold flex items-center gap-1 hover:underline mt-auto"
+          >
+            Ver metas financeiras
+            <span className="material-symbols-outlined text-xs" translate="no">arrow_forward</span>
+          </Link>
+        </div>
       </div>
 
-      {/* Charts & Balanço */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Row 2: Charts & Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
         {/* Gastos por Categoria */}
-        <div className="lg:col-span-8 bg-surface-container-low p-8 rounded-xl">
+        <div className="bg-surface-container-low p-8 rounded-xl">
           <div className="flex justify-between items-center mb-10">
             <h4 className="font-dm-sans text-lg font-bold text-[#e5e2e1]">Gastos por Categoria</h4>
             <Link href="/categories" className="text-primary text-sm hover:underline">
@@ -336,16 +359,16 @@ export default function DashboardPage() {
           </div>
 
           {categoryData.length > 0 ? (
-            <div className="flex flex-col md:flex-row items-center gap-12">
+            <div className="flex flex-col sm:flex-row items-center gap-8">
               {/* Donut */}
-              <div className="relative w-48 h-48 flex items-center justify-center">
+              <div className="relative w-40 h-40 flex items-center justify-center flex-shrink-0">
                 <svg className="w-full h-full transform -rotate-90">
                   <circle
-                    cx="96" cy="96" fill="transparent" r="80"
-                    stroke="#353534" strokeWidth="20"
+                    cx="80" cy="80" fill="transparent" r="65"
+                    stroke="#353534" strokeWidth="15"
                   />
                   {categoryData.map((cat, index) => {
-                    const circumference = 2 * Math.PI * 80;
+                    const circumference = 2 * Math.PI * 65;
                     const offset = categoryData
                       .slice(0, index)
                       .reduce((sum, c) => sum + (c.percentage / 100) * circumference, 0);
@@ -353,9 +376,9 @@ export default function DashboardPage() {
                     return (
                       <circle
                         key={cat.name}
-                        cx="96" cy="96" fill="transparent" r="80"
+                        cx="80" cy="80" fill="transparent" r="65"
                         stroke={cat.color}
-                        strokeWidth="20"
+                        strokeWidth="15"
                         strokeDasharray={`${dashArray} ${circumference}`}
                         strokeDashoffset={-offset}
                         strokeLinecap="round"
@@ -364,84 +387,37 @@ export default function DashboardPage() {
                   })}
                 </svg>
                 <div className="absolute text-center">
-                  <p className="text-[10px] uppercase tracking-widest text-[#c3c6d6]">Total</p>
-                  <p className="text-xl font-bold font-dm-sans">{formatCurrency(totalExpenseMonth)}</p>
+                  <p className="text-[8px] uppercase tracking-widest text-[#c3c6d6]">Total</p>
+                  <p className="text-sm font-bold font-dm-sans">{formatCurrency(totalExpenseMonth)}</p>
                 </div>
               </div>
 
               {/* Legend */}
-              <div className="flex-1 w-full space-y-4">
+              <div className="flex-1 w-full space-y-3">
                 {categoryData.map((cat) => (
                   <div key={cat.name} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                      <span className="text-sm font-source-sans-3">{cat.name}</span>
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                      <span className="text-xs font-source-sans-3 truncate max-w-[80px]">{cat.name}</span>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-sm text-[#c3c6d6]">{formatCurrency(cat.amount)}</span>
-                      <span className="font-bold text-sm w-12 text-right">{cat.percentage.toFixed(0)}%</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-[#c3c6d6]">{formatCurrency(cat.amount)}</span>
+                      <span className="font-bold text-xs w-10 text-right">{cat.percentage.toFixed(0)}%</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <span className="material-symbols-outlined text-6xl text-[#424654] mb-4">pie_chart</span>
-              <p className="text-[#c3c6d6] mb-2">Nenhuma despesa neste mês</p>
-              <button
-                onClick={() => setShowTransactionModal(true)}
-                className="text-primary text-sm hover:underline"
-              >
-                Adicionar primeira transação
-              </button>
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <span className="material-symbols-outlined text-5xl text-[#424654] mb-3">pie_chart</span>
+              <p className="text-[#c3c6d6] text-sm mb-2">Nenhuma despesa</p>
             </div>
           )}
         </div>
 
-        {/* Balanço do Mês */}
-        <div className="lg:col-span-4">
-          <div className="bg-[#1c1b1b] p-8 rounded-xl border border-[#424654]/10 h-full flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-              <h4 className="font-dm-sans text-lg font-bold text-[#e5e2e1]">Balanço do Mês</h4>
-              <span
-                className="material-symbols-outlined text-sm"
-                style={{
-                  color: income - expense >= 0 ? "#69f0ae" : "#ff8a80",
-                  fontVariationSettings: "'FILL' 1",
-                }}
-              >
-                {income - expense >= 0 ? "trending_up" : "trending_down"}
-              </span>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-center">
-              <p className="text-[#c3c6d6] text-xs mb-2">
-                {income - expense >= 0 ? "Você economizou" : "Você gastou a mais"}
-              </p>
-              <p
-                className={`text-4xl font-bold font-dm-sans ${
-                  income - expense >= 0 ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {formatCurrency(Math.abs(income - expense))}
-              </p>
-              <p className="text-[#c3c6d6] text-xs mt-4">
-                Receitas: {formatCurrency(income)}
-                <br />
-                Despesas: {formatCurrency(expense)}
-              </p>
-            </div>
-
-            <Link
-              href="/goals"
-              className="mt-8 text-[#b0c6ff] text-sm font-bold flex items-center justify-center gap-2 hover:underline"
-            >
-              Ver metas financeiras
-              <span className="material-symbols-outlined text-sm" translate="no">arrow_forward</span>
-            </Link>
-          </div>
-        </div>
+        {/* AI Insights Card */}
+        <FinancialInsightsCard />
       </div>
 
       {/* Últimas Transações do Mês */}
@@ -478,7 +454,7 @@ export default function DashboardPage() {
                     </p>
                     <p className="text-xs text-on-surface-variant">
                       {txn.category.name} •{" "}
-                      {new Date(txn.occurredOn + "T00:00:00").toLocaleDateString("pt-BR")}
+                      {new Date(txn.occurredOn.split("T")[0] + "T00:00:00").toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                 </div>
@@ -503,19 +479,13 @@ export default function DashboardPage() {
         onSave={handleSaveBalance}
       />
 
-      <TransactionModal
-        isOpen={showTransactionModal}
-        onClose={() => setShowTransactionModal(false)}
-        onSave={handleAddTransaction}
-      />
-
       {/* FAB Mobile */}
-      <button
-        onClick={() => setShowTransactionModal(true)}
+      <Link
+        href="/new-transaction"
         className="fixed bottom-24 right-6 md:hidden w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all z-40"
       >
         <span className="material-symbols-outlined text-2xl">add</span>
-      </button>
+      </Link>
     </>
   );
 }

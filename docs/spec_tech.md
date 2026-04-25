@@ -28,7 +28,7 @@ Este documento orienta desenvolvimento e operações do produto de **finanças p
 ### Backend
 
 - **Linguagem:** TypeScript ou Python (escolha única)
-- **Runtime:** Node.js 20+ ou Python 3.11+
+- **Runtime:** Node.js 22+ ou Python 3.11+
 - **Framework:** Express/Fastify (Node) ou FastAPI (Python)
 - **Persistência:** PostgreSQL (recomendado)
 - **ORM:** Prisma (Node) ou SQLAlchemy (Python)

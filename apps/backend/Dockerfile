@@ -1,4 +1,5 @@
 FROM node:lts-alpine AS builder
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 # Instalação de dependências global para o monorepo
@@ -16,6 +17,7 @@ WORKDIR /app/apps/backend
 RUN npm run build
 
 FROM node:lts-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 ENV NODE_ENV=production
 
