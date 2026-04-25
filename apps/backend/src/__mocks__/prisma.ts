@@ -16,8 +16,10 @@ const prismaMock = {
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    deleteMany: jest.fn(),
   },
   transaction: {
+    count: jest.fn(),
     create: jest.fn(),
     findMany: jest.fn(),
     findUnique: jest.fn(),

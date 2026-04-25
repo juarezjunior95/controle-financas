@@ -34,6 +34,10 @@ const config: Config = {
       },
     },
   ],
+  // Modulo para resolver ESM error com uuid
+  moduleNameMapper: {
+    '^uuid$': require.resolve('uuid'),
+  },
 };
 
 export default config;

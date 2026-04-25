@@ -28,7 +28,7 @@ describe('[UNIT] CategoryService', () => {
     });
 
     await expect(CategoryService.delete(MOCK_USER.clerkId, 'uuid-cat-system')).rejects.toThrow(
-      'Categorias do sistema não podem ser excluídas ou alteradas.'
+      'Categorias do sistema não podem ser apagadas.'
     );
   });
 
@@ -41,14 +41,14 @@ describe('[UNIT] CategoryService', () => {
       isSystem: false,
     });
     // Nenhuma transação associada
-    (prisma.transaction.findMany as jest.Mock).mockResolvedValue([]);
-    (prisma.category.delete as jest.Mock).mockResolvedValue({ id: 'uuid-cat-custom' });
+    (prisma.transaction.count as jest.Mock).mockResolvedValue(0);
+    (prisma.category.deleteMany as jest.Mock).mockResolvedValue({ count: 1 });
 
     const result = await CategoryService.delete(MOCK_USER.clerkId, 'uuid-cat-custom');
 
     expect(result.id).toBe('uuid-cat-custom');
-    expect(prisma.category.delete).toHaveBeenCalledWith({
-      where: { id: 'uuid-cat-custom' },
+    expect(prisma.category.deleteMany).toHaveBeenCalledWith({
+      where: { id: 'uuid-cat-custom', userId: MOCK_USER.id },
     });
   });
 
@@ -61,13 +61,11 @@ describe('[UNIT] CategoryService', () => {
       isSystem: false,
     });
     // Existe uma transação vinculada a essa categoria
-    (prisma.transaction.findMany as jest.Mock).mockResolvedValue([
-      { id: 'uuid-tx-001', categoryId: 'uuid-cat-custom' }
-    ]);
+    (prisma.transaction.count as jest.Mock).mockResolvedValue(1);
 
     await expect(CategoryService.delete(MOCK_USER.clerkId, 'uuid-cat-custom')).rejects.toThrow(
       'Não é possível excluir esta categoria porque existem transações vinculadas a ela.'
     );
-    expect(prisma.category.delete).not.toHaveBeenCalled();
+    expect(prisma.category.deleteMany).not.toHaveBeenCalled();
   });
 });

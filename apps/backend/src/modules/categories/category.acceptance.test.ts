@@ -37,9 +37,7 @@ describe('[ACCEPTANCE] Fluxo de Categorias HTTP', () => {
       isSystem: false,
     });
     // Simula que existe transação vinculada
-    (prisma.transaction.findMany as jest.Mock).mockResolvedValue([
-      { id: 'tx-001', categoryId: 'cat-custom' }
-    ]);
+    (prisma.transaction.count as jest.Mock).mockResolvedValue(1);
 
     const response = await request(app).delete('/api/v1/categories/cat-custom');
 
