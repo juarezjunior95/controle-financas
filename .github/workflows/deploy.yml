@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main # Aciona o workflow apenas em push na branch main
+  pull_request:
+    branches:
+      - main # Também roda para pull requests direcionados à branch main
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -43,40 +46,44 @@ jobs:
       - name: Run Linter
         run: npm run lint --if-present
 
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Run Tests
         run: npm run test --if-present
         # O pipeline irá falhar automaticamente se o linter ou os testes falharem (exit code != 0)
 
-  deploy:
-    name: Deploy to Vercel (Production)
-    needs: lint-and-test # Somente executa se o job de lint-and-test não apresentar erros
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+  #deploy:
+  #  name: Deploy to Vercel (Production)
+  #  needs: lint-and-test # Somente executa se o job de lint-and-test não apresentar erros
+  #  if: github.event_name == 'push'
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - name: Checkout Code
+  #      uses: actions/checkout@v4
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+  #    - name: Install Vercel CLI
+  #      run: npm install --global vercel@latest
 
       # ==========================================
       # DEPLOY: BACKEND
       # ==========================================
-      - name: Deploy to Vercel Cloud (Backend)
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        working-directory: ./apps/backend
+  #    - name: Deploy to Vercel Cloud (Backend)
+  #      run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+  #      env:
+  #        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
+  #        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  #      working-directory: ./apps/backend
 
       # ==========================================
       # DEPLOY: FRONTEND
       # ==========================================
-      - name: Deploy to Vercel Cloud (Frontend)
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        working-directory: ./apps/frontend
+  #    - name: Deploy to Vercel Cloud (Frontend)
+  #      run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+  #      env:
+  #        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+  #        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  #      working-directory: ./apps/frontend
 
       # (Opcional) Passo comentado com a Notificação de Status
       # - name: Send Notification

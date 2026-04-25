@@ -1,14 +1,19 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import { logger } from './config/logger';
+import { httpLogger } from './middleware/logger.middleware';
 
 const app = express();
 
 // ─── Logging de inicialização ───────────────────────────────────────────────
-console.log('[Backend] Iniciando...');
-console.log('[Backend] NODE_ENV:', process.env.NODE_ENV || 'não definido');
-console.log('[Backend] DATABASE_URL:', process.env.DATABASE_URL ? 'configurada' : 'NÃO CONFIGURADA');
-console.log('[Backend] CLERK_SECRET_KEY:', process.env.CLERK_SECRET_KEY ? 'configurada' : 'NÃO CONFIGURADA');
+logger.info('Iniciando Backend...');
+logger.info({ nodeEnv: process.env.NODE_ENV }, 'Environment');
+logger.info({ configured: !!process.env.DATABASE_URL }, 'Database URL');
+logger.info({ configured: !!process.env.CLERK_SECRET_KEY }, 'Clerk Secret Key');
+
+// Middleware global de logging HTTP
+app.use(httpLogger);
 
 // CORS — permite o frontend acessar a API
 app.use(cors({
@@ -92,6 +97,7 @@ try {
   const { DashboardController } = require('./modules/dashboard/dashboard.controller');
   const { CategoryController } = require('./modules/categories/category.controller');
   const { GoalController } = require('./modules/goals/goal.controller');
+  const { aiRoutes } = require('./modules/ai/ai.routes');
 
   // Clerk middleware global — anexa auth state em todas as rotas
   app.use(clerkAuth);
@@ -134,6 +140,9 @@ try {
   apiRouter.delete('/goals/:id', requireAuthentication, GoalController.delete);
   apiRouter.patch('/goals/:id/progress', requireAuthentication, GoalController.updateProgress);
 
+  // Rotas de IA
+  apiRouter.use('/ai', aiRoutes);
+
   // Montar versionamento da API
   app.use('/api/v1', apiRouter);
 
@@ -170,8 +179,8 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 // ─── Iniciar servidor ───────────────────────────────────────────────────────
 const port = process.env.PORT || 3333;
 app.listen(port, () => {
-  console.log(`[Backend] Server is running on port ${port}`);
-  console.log(`[Backend] API: http://localhost:${port}/api/v1`);
+  logger.info(`Server is running on port ${port}`);
+  logger.info(`API: http://localhost:${port}/api/v1`);
 });
 
 // Exporta o app para Vercel Serverless Functions
