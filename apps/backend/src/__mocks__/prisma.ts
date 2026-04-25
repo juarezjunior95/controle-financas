@@ -10,6 +10,7 @@ const prismaMock = {
     update: jest.fn(),
   },
   category: {
+    findUnique: jest.fn(),
     upsert: jest.fn(),
     findMany: jest.fn(),
     create: jest.fn(),
