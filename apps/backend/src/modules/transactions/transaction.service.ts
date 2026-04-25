@@ -80,8 +80,9 @@ export class TransactionService {
     }
 
     if (filters?.month !== undefined && filters?.year !== undefined) {
-      const startDate = new Date(filters.year, filters.month, 1);
-      const endDate = new Date(filters.year, filters.month + 1, 0, 23, 59, 59);
+      const monthIndex = filters.month - 1;
+      const startDate = new Date(filters.year, monthIndex, 1);
+      const endDate = new Date(filters.year, monthIndex + 1, 0, 23, 59, 59);
       
       where.occurredOn = {
         gte: startDate,
