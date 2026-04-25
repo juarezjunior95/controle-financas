@@ -1,5 +1,5 @@
 import pinoHttp from 'pino-http';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { logger } from '../config/logger';
 import { Request, Response } from 'express';
 
@@ -8,7 +8,7 @@ export const httpLogger = pinoHttp({
   logger,
   genReqId: function (req: Request, res: Response) {
     // Se o header já vier do Vercel/Cloudflare, usa ele, senão gera um UUID
-    const reqId = req.headers['x-request-id'] || uuidv4();
+    const reqId = req.headers['x-request-id'] || randomUUID();
     res.setHeader('X-Request-Id', reqId);
     return reqId;
   },
