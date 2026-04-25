@@ -145,8 +145,8 @@ describe('[UNIT] TransactionService.listByUser', () => {
       expect.objectContaining({
         where: expect.objectContaining({
           occurredOn: expect.objectContaining({
-            gte: new Date(2026, 3, 1),    // mês 3 = abril (0-indexed)
-            lte: new Date(2026, 4, 0, 23, 59, 59),
+            gte: new Date(2026, 2, 1),    // mês 3 = Março (índice 2)
+            lte: new Date(2026, 3, 0, 23, 59, 59),
           }),
         }),
       })

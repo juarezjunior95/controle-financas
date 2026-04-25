@@ -115,4 +115,31 @@ describe('[INTEGRATION] DashboardService.getSummary', () => {
       });
     });
   });
+
+  it('deve calcular resumo mensal baseado nos filtros de mês e ano', async () => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue(MOCK_USER);
+    (prisma.transaction.groupBy as jest.Mock)
+      .mockResolvedValueOnce([
+        { type: 'income', _sum: { amount: '1000.00' } },
+        { type: 'expense', _sum: { amount: '200.00' } },
+      ])
+      .mockResolvedValueOnce([
+        { type: 'expense', _sum: { amount: '50.00' } },
+      ]);
+
+    const result = await DashboardService.getSummary(MOCK_USER.clerkId, { month: 4, year: 2026 });
+
+    expect(result.monthlyExpenses).toBe(50);
+    
+    // Verifica se a chamada do Prisma usou o range correto para mês 4 (Abril) -> índice 3
+    const calls = (prisma.transaction.groupBy as jest.Mock).mock.calls;
+    expect(calls[1][0]).toMatchObject({
+      where: expect.objectContaining({
+        occurredOn: {
+          gte: new Date(2026, 3, 1),
+          lte: new Date(2026, 4, 0, 23, 59, 59, 999),
+        }
+      }),
+    });
+  });
 });

@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { MonthSelector } from "@/components/dashboard/MonthSelector";
 import { EditBalanceModal } from "@/components/dashboard/EditBalanceModal";
-import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
+
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/storage";
@@ -67,7 +67,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showBalanceModal, setShowBalanceModal] = useState(false);
-  const [showTransactionModal, setShowTransactionModal] = useState(false);
+
   const [isSavingBalance, setIsSavingBalance] = useState(false);
 
   // ─── Fetch dashboard summary + transactions do mês ─────────────────────────
@@ -80,7 +80,7 @@ export default function DashboardPage() {
     const year = selectedYear;
 
     const [summaryResult, txResult] = await Promise.all([
-      fetchAPI<DashboardSummary>("/dashboard/summary", { token }),
+      fetchAPI<DashboardSummary>(`/dashboard/summary?month=${month}&year=${year}`, { token }),
       fetchAPI<Transaction[]>(`/transactions?month=${month}&year=${year}`, { token }),
     ]);
 
@@ -160,36 +160,7 @@ export default function DashboardPage() {
     [token]
   );
 
-  const handleAddTransaction = useCallback(
-    async (data: {
-      type: "income" | "expense";
-      amount: number;
-      category: string;
-      description: string;
-      date: string;
-    }) => {
-      if (!token) return;
-      const { error: err } = await fetchAPI("/transactions", {
-        method: "POST",
-        token,
-        body: JSON.stringify({
-          type: data.type,
-          amount: data.amount,
-          category: data.category,
-          description: data.description,
-          date: data.date,
-        }),
-      });
-      if (err) {
-        alert("Erro ao criar transação: " + err.message);
-      } else {
-        setShowTransactionModal(false);
-        fetchData();
-        router.refresh();
-      }
-    },
-    [token, fetchData]
-  );
+
 
   const handleMonthChange = useCallback((month: number, year: number) => {
     setSelectedMonth(month);
@@ -245,13 +216,13 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button
-            onClick={() => setShowTransactionModal(true)}
+          <Link
+            href="/new-transaction"
             className="bg-primary text-on-primary px-5 py-2.5 rounded-full text-sm font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-lg focus-visible:ring-2 focus-visible:ring-primary outline-none"
           >
-            <span className="material-symbols-outlined text-lg">add</span>
-            Nova Transação
-          </button>
+            <span className="material-symbols-outlined text-lg">add_circle</span>
+            Novo Lançamento
+          </Link>
         </div>
       </div>
 
@@ -389,12 +360,12 @@ export default function DashboardPage() {
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <span className="material-symbols-outlined text-6xl text-[#424654] mb-4">pie_chart</span>
               <p className="text-[#c3c6d6] mb-2">Nenhuma despesa neste mês</p>
-              <button
-                onClick={() => setShowTransactionModal(true)}
+              <Link
+                href="/new-transaction"
                 className="text-primary text-sm hover:underline"
               >
-                Adicionar primeira transação
-              </button>
+                Adicionar primeiro lançamento
+              </Link>
             </div>
           )}
         </div>
@@ -478,7 +449,7 @@ export default function DashboardPage() {
                     </p>
                     <p className="text-xs text-on-surface-variant">
                       {txn.category.name} •{" "}
-                      {new Date(txn.occurredOn + "T00:00:00").toLocaleDateString("pt-BR")}
+                      {new Date(txn.occurredOn.split("T")[0] + "T00:00:00").toLocaleDateString("pt-BR")}
                     </p>
                   </div>
                 </div>
@@ -503,19 +474,13 @@ export default function DashboardPage() {
         onSave={handleSaveBalance}
       />
 
-      <TransactionModal
-        isOpen={showTransactionModal}
-        onClose={() => setShowTransactionModal(false)}
-        onSave={handleAddTransaction}
-      />
-
       {/* FAB Mobile */}
-      <button
-        onClick={() => setShowTransactionModal(true)}
+      <Link
+        href="/new-transaction"
         className="fixed bottom-24 right-6 md:hidden w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all z-40"
       >
         <span className="material-symbols-outlined text-2xl">add</span>
-      </button>
+      </Link>
     </>
   );
 }

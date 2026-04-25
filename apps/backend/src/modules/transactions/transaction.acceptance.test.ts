@@ -130,4 +130,22 @@ describe('[ACCEPTANCE] Fluxo Ponta-a-Ponta: Transações -> Dashboard', () => {
     expect(response.body.data.monthlyBalance).toBe(350); // 500 - 150
   });
 
+  it('deve retornar o resumo do dashboard atualizado com filtros usando HTTP 200', async () => {
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+      ...MOCK_USER,
+      initialBalance: '500.00'
+    });
+    
+    (prisma.transaction.groupBy as jest.Mock)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        { type: 'income', _sum: { amount: '300.00' } },
+      ]);
+
+    const response = await request(app).get('/api/v1/dashboard/summary?month=4&year=2026');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.monthlyIncome).toBe(300);
+  });
+
 });
