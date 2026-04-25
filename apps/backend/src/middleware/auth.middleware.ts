@@ -27,6 +27,8 @@ export const requireAuthentication = (req: Request, res: Response, next: NextFun
   }
 
   // Anexa o objeto de autenticação ao request para uso nos controllers
+  // IMPORTANTE: Isso sobrescreve a função interna req.auth do Clerk.
+  // Use (req as any).auth nos controllers em vez de getAuth(req) para evitar conflitos.
   (req as AuthenticatedRequest).auth = auth;
 
   next();
