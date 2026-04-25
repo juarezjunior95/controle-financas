@@ -78,7 +78,7 @@ A stack principal deste repositório inclui as seguintes ferramentas modernas:
 Para iniciar a sua colaboração ou testar a versão local do **Controle de Finanças**, bastará seguir as etapas abaixo.
 
 ### Pré-requisitos
-- [Node.js](https://nodejs.org/) (versão LTS recomendada: 18+ ou 20+)
+- [Node.js](https://nodejs.org/) (versão LTS recomendada: 22+)
 - [Git](https://git-scm.com/)
 - [Docker](https://www.docker.com/) (opcional, para ambiente de containers de db)
 - Conta e Projeto configurado no [Supabase](https://supabase.com/) 
