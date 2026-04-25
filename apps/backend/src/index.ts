@@ -178,10 +178,12 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 
 // ─── Iniciar servidor ───────────────────────────────────────────────────────
 const port = process.env.PORT || 3333;
-app.listen(port, () => {
-  logger.info(`Server is running on port ${port}`);
-  logger.info(`API: http://localhost:${port}/api/v1`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    logger.info(`Server is running on port ${port}`);
+    logger.info(`API: http://localhost:${port}/api/v1`);
+  });
+}
 
 // Exporta o app para Vercel Serverless Functions
 export default app;

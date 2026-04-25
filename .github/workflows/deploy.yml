@@ -37,7 +37,7 @@ jobs:
       - name: Setup Node.js LTS
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # LTS especificada no spec_tech.md
+          node-version: '22' # Atualizado para 22 para suprir requisitos do Prisma
           cache: 'npm'       # Cache automático das dependências do NPM
 
       - name: Install Dependencies
