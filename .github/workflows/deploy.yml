@@ -53,34 +53,34 @@ jobs:
         run: npm run test --if-present
         # O pipeline irá falhar automaticamente se o linter ou os testes falharem (exit code != 0)
 
-  deploy:
-    name: Deploy to Vercel (Production)
-    needs: lint-and-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+  #deploy:
+  #  name: Deploy to Vercel (Production)
+  #  needs: lint-and-test
+  #  if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - name: Checkout Code
+  #      uses: actions/checkout@v4
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
+  #    - name: Install Vercel CLI
+  #      run: npm install --global vercel@latest
 
       # ==========================================
       # DEPLOY: BACKEND
       # ==========================================
-      - name: Deploy to Vercel Cloud (Backend)
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        working-directory: ./apps/backend
+  #    - name: Deploy to Vercel Cloud (Backend)
+  #      run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+  #      env:
+  #        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_BACKEND }}
+  #        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  #      working-directory: ./apps/backend
 
       # ==========================================
       # DEPLOY: FRONTEND
       # ==========================================
-      - name: Deploy to Vercel Cloud (Frontend)
-        run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        working-directory: ./apps/frontend
+  #    - name: Deploy to Vercel Cloud (Frontend)
+  #      run: vercel deploy --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
+  #      env:
+  #        VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
+  #        VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  #      working-directory: ./apps/frontend
