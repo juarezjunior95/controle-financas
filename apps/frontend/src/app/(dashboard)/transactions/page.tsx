@@ -8,17 +8,20 @@ import { fetchAPI } from "@/lib/api";
 import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
 import { DeleteTransactionModal } from "@/components/transactions/DeleteTransactionModal";
 
+interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+  color?: string;
+}
+
 interface Transaction {
   id: string;
   type: "income" | "expense";
   amount: number;
   description: string;
   occurredOn: string;
-  category: {
-    name: string;
-    icon?: string;
-    color?: string;
-  };
+  category: Category;
 }
 
 type Toast = { message: string; kind: "success" | "error" };
@@ -39,6 +42,8 @@ export default function TransactionsPage() {
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedType, setSelectedType] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   const showToast = useCallback((message: string, kind: "success" | "error") => {
@@ -64,6 +69,10 @@ export default function TransactionsPage() {
       params.append("type", selectedType);
     }
 
+    if (selectedCategory !== "all") {
+      params.append("categoryId", selectedCategory);
+    }
+
     const { data, error: apiError } = await fetchAPI<Transaction[]>(
       `/transactions?${params.toString()}`,
       { token }
@@ -77,11 +86,18 @@ export default function TransactionsPage() {
     }
 
     setLoading(false);
-  }, [authLoading, isAuthenticated, token, selectedMonth, selectedYear, selectedType]);
+  }, [authLoading, isAuthenticated, token, selectedMonth, selectedYear, selectedType, selectedCategory]);
+
+  const loadCategories = useCallback(async () => {
+    if (!token) return;
+    const { data } = await fetchAPI<Category[]>("/categories", { token });
+    if (data) setCategories(data);
+  }, [token]);
 
   useEffect(() => {
     loadTransactions();
-  }, [loadTransactions]);
+    loadCategories();
+  }, [loadTransactions, loadCategories]);
 
   const handleDelete = async () => {
     if (!transactionToDelete) return;
@@ -148,8 +164,10 @@ export default function TransactionsPage() {
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) return "Hoje";
-    if (date.toDateString() === yesterday.toDateString()) return "Ontem";
+    const dateFormatted = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "long" });
+
+    if (date.toDateString() === today.toDateString()) return `Hoje, ${dateFormatted}`;
+    if (date.toDateString() === yesterday.toDateString()) return `Ontem, ${dateFormatted}`;
 
     return date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
   };
@@ -241,12 +259,12 @@ export default function TransactionsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="lg:col-span-6 grid grid-cols-3 gap-3">
+          <div className="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
             <select
               aria-label="Filtrar por mês"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none"
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-xs text-on-surface focus:ring-1 focus:ring-primary outline-none"
             >
               {months.map((m, i) => (
                 <option key={m} value={i}>{m}</option>
@@ -256,7 +274,7 @@ export default function TransactionsPage() {
               aria-label="Filtrar por ano"
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none"
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-xs text-on-surface focus:ring-1 focus:ring-primary outline-none"
             >
               {years.map((y) => (
                 <option key={y} value={y}>{y}</option>
@@ -266,13 +284,40 @@ export default function TransactionsPage() {
               aria-label="Filtrar por tipo"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-sm text-on-surface focus:ring-1 focus:ring-primary outline-none"
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-xs text-on-surface focus:ring-1 focus:ring-primary outline-none"
             >
-              <option value="all">Tipo</option>
+              <option value="all">Ambos</option>
               <option value="income">Entradas</option>
               <option value="expense">Saídas</option>
             </select>
+            <select
+              aria-label="Filtrar por categoria"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="bg-surface-container-high border-none rounded-2xl py-3 px-4 text-xs text-on-surface focus:ring-1 focus:ring-primary outline-none"
+            >
+              <option value="all">Categorias</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              setSelectedMonth(now.getMonth());
+              setSelectedYear(now.getFullYear());
+              setSelectedType("all");
+              setSelectedCategory("all");
+              setSearchQuery("");
+            }}
+            className="flex items-center gap-2 text-xs font-bold text-on-surface-variant hover:text-primary transition-colors py-2 px-4"
+          >
+            <span className="material-symbols-outlined text-base">filter_list_off</span>
+            Limpar Filtros
+          </button>
         </div>
       </section>
 
@@ -280,17 +325,17 @@ export default function TransactionsPage() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-surface-container-high rounded-2xl p-6 relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl" />
-          <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Entradas</p>
+          <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Entradas Mensais</p>
           <h3 className="font-headline text-2xl font-bold text-primary">{formatCurrency(totals.income)}</h3>
         </div>
         <div className="bg-surface-container-high rounded-2xl p-6 relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-error/5 rounded-full blur-2xl" />
-          <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Saídas</p>
+          <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Saídas Mensais</p>
           <h3 className="font-headline text-2xl font-bold text-error">{formatCurrency(totals.expense)}</h3>
         </div>
         <div className="bg-surface-container-high rounded-2xl p-6 relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-on-surface/5 rounded-full blur-2xl" />
-          <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2">Saldo</p>
+          <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant mb-2 font-bold">Saldo Projetado</p>
           <h3
             className={`font-headline text-2xl font-bold ${
               totals.balance >= 0 ? "text-primary" : "text-error"
@@ -328,7 +373,13 @@ export default function TransactionsPage() {
               Não encontramos registros para o período ou filtro selecionado.
             </p>
             <button
-              onClick={() => { setSelectedMonth(now.getMonth()); setSelectedType("all"); setSearchQuery(""); }}
+              onClick={() => {
+                setSelectedMonth(now.getMonth());
+                setSelectedYear(now.getFullYear());
+                setSelectedType("all");
+                setSelectedCategory("all");
+                setSearchQuery("");
+              }}
               className="text-primary hover:underline font-bold"
             >
               Limpar Filtros

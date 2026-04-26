@@ -66,7 +66,7 @@ export class TransactionService {
   /**
    * Lista transações de um usuário com filtros opcionais.
    */
-  static async listByUser(userId: string, filters?: { month?: number; year?: number; type?: 'income' | 'expense' }) {
+  static async listByUser(userId: string, filters?: { month?: number; year?: number; type?: 'income' | 'expense'; categoryId?: string }) {
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
     });
@@ -77,6 +77,10 @@ export class TransactionService {
 
     if (filters?.type) {
       where.type = filters.type;
+    }
+
+    if (filters?.categoryId) {
+      where.categoryId = filters.categoryId;
     }
 
     if (filters?.month !== undefined && filters?.year !== undefined) {

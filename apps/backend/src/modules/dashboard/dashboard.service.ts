@@ -58,12 +58,33 @@ export class DashboardService {
       const monthlyExpenses = Number(monthlySummary.find((t: any) => t.type === 'expense')?._sum.amount || 0);
       const monthlyBalance = monthlyIncome - monthlyExpenses;
 
+      // 4. Cálculo do Mês Anterior (Para Comparação)
+      const lastMonthStart = new Date(filterYear, filterMonthIndex - 1, 1);
+      const lastMonthEnd = new Date(filterYear, filterMonthIndex, 0, 23, 59, 59, 999);
+
+      const lastMonthSummary = await prisma.transaction.groupBy({
+        by: ['type'],
+        where: {
+          userId: user.id,
+          occurredOn: {
+            gte: lastMonthStart,
+            lte: lastMonthEnd,
+          },
+        },
+        _sum: { amount: true },
+      });
+
+      const lastMonthIncome = Number(lastMonthSummary.find((t: any) => t.type === 'income')?._sum.amount || 0);
+      const lastMonthExpenses = Number(lastMonthSummary.find((t: any) => t.type === 'expense')?._sum.amount || 0);
+
       return {
         initialBalance,
         totalBalance,
         monthlyIncome,
         monthlyExpenses,
         monthlyBalance,
+        lastMonthIncome,
+        lastMonthExpenses,
       };
     } catch (error: any) {
       console.error('[DashboardService] Erro ao calcular sumário:', error);

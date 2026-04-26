@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { MonthSelector } from "@/components/dashboard/MonthSelector";
-import { EditBalanceModal } from "@/components/dashboard/EditBalanceModal";
 import { FinancialInsightsCard } from "@/components/dashboard/FinancialInsightsCard";
+import { UpcomingGoalsCard } from "@/components/dashboard/UpcomingGoalsCard";
 
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
@@ -20,6 +20,8 @@ interface DashboardSummary {
   monthlyIncome: number;
   monthlyExpenses: number;
   monthlyBalance: number;
+  lastMonthIncome: number;
+  lastMonthExpenses: number;
 }
 
 interface Category {
@@ -69,9 +71,6 @@ export default function DashboardPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [showBalanceModal, setShowBalanceModal] = useState(false);
-  const [isSavingBalance, setIsSavingBalance] = useState(false);
   const { toast, showToast } = useToast();
 
   // ─── Fetch dashboard summary + transactions do mês ─────────────────────────
@@ -138,36 +137,6 @@ export default function DashboardPage() {
 
   // ─── Handlers ────────────────────────────────────────────────────────────
 
-  const handleSaveBalance = useCallback(
-    async (value: number) => {
-      if (!token) return;
-      setIsSavingBalance(true);
-      const { data, error: err } = await fetchAPI<{ initialBalance: number }>(
-        "/users/initial-balance",
-        { method: "PUT", token, body: JSON.stringify({ initialBalance: value }) }
-      );
-      if (err) {
-        showToast("Erro ao salvar saldo: " + err.message, "error");
-      } else if (data) {
-        setSummary((prev) =>
-          prev
-            ? {
-                ...prev,
-                initialBalance: data.initialBalance,
-                totalBalance:
-                  data.initialBalance +
-                  (prev.totalBalance - prev.initialBalance),
-              }
-            : prev
-        );
-        setShowBalanceModal(false);
-        showToast("Saldo inicial atualizado com sucesso!", "success");
-        router.refresh();
-      }
-      setIsSavingBalance(false);
-    },
-    [token]
-  );
 
 
 
@@ -203,7 +172,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Row 2 skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
           <div className="bg-[#1c1b1b] p-8 rounded-xl animate-pulse">
             <div className="h-5 w-40 bg-[#252424] rounded mb-10" />
             <div className="flex items-center gap-8">
@@ -213,6 +182,17 @@ export default function DashboardPage() {
                   <div key={i} className="h-4 bg-[#252424] rounded-lg" />
                 ))}
               </div>
+            </div>
+          </div>
+          <div className="bg-[#1c1b1b] p-8 rounded-xl animate-pulse">
+            <div className="h-5 w-40 bg-[#252424] rounded mb-10" />
+            <div className="space-y-6">
+              {[1, 2, 3].map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-3 w-full bg-[#252424] rounded" />
+                  <div className="h-2 w-full bg-[#252424] rounded-full" />
+                </div>
+              ))}
             </div>
           </div>
           <div className="bg-[#1c1b1b] p-8 rounded-xl animate-pulse">
@@ -307,22 +287,16 @@ export default function DashboardPage() {
             <div className="p-3 bg-[#b0c6ff]/20 rounded-2xl text-[#b0c6ff]">
               <span className="material-symbols-outlined" translate="no">account_balance</span>
             </div>
-            <button
-              onClick={() => setShowBalanceModal(true)}
-              className="p-2 rounded-full bg-[#b0c6ff]/10 hover:bg-[#b0c6ff]/30 transition-colors focus-visible:ring-2 focus-visible:ring-primary outline-none"
-              title="Editar saldo inicial"
-              aria-label="Editar saldo inicial"
-            >
-              <span className="material-symbols-outlined text-[#b0c6ff] text-sm">edit</span>
-            </button>
+            <div className="bg-[#424654]/30 px-3 py-1 rounded-lg">
+              <span className="text-[#b0c6ff] text-[10px] font-bold tracking-widest uppercase">Atualizado</span>
+            </div>
           </div>
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Saldo Atual</p>
           <div className="flex items-baseline gap-1">
             <span className="text-[#b0c6ff] text-lg font-dm-sans">R$</span>
             <h3
-              className={`text-4xl font-bold font-dm-sans tracking-tighter ${
-                currentBalance >= 0 ? "text-[#e5e2e1]" : "text-red-400"
-              }`}
+              className={`text-4xl font-bold font-dm-sans tracking-tighter ${currentBalance >= 0 ? "text-[#e5e2e1]" : "text-red-400"
+                }`}
             >
               {formatCurrency(currentBalance).replace("R$", "").trim()}
             </h3>
@@ -340,6 +314,11 @@ export default function DashboardPage() {
             <div className="p-3 bg-green-500/20 rounded-2xl text-green-400">
               <span className="material-symbols-outlined" translate="no">trending_up</span>
             </div>
+            {summary && (
+              <span className="text-[10px] font-bold text-[#22c55e]">
+                {calcVariation(income, summary.lastMonthIncome) >= 0 ? "+" : ""}{calcVariation(income, summary.lastMonthIncome).toFixed(0)}% vs mês ant.
+              </span>
+            )}
           </div>
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Receitas do Mês</p>
           <div className="flex items-baseline gap-1">
@@ -356,6 +335,11 @@ export default function DashboardPage() {
             <div className="p-3 bg-red-500/20 rounded-2xl text-red-400">
               <span className="material-symbols-outlined" translate="no">trending_down</span>
             </div>
+            {summary && (
+              <span className="text-[10px] font-bold text-[#ef4444]">
+                {calcVariation(expense, summary.lastMonthExpenses) > 0 ? "+" : ""}{calcVariation(expense, summary.lastMonthExpenses).toFixed(0)}% vs mês ant.
+              </span>
+            )}
           </div>
           <p className="text-[#c3c6d6] text-xs font-source-sans-3 mb-1">Despesas do Mês</p>
           <div className="flex items-baseline gap-1">
@@ -367,7 +351,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Balanço do Mês */}
-        <div className="bg-[#1c1b1b] p-8 rounded-xl border border-[#424654]/10 flex flex-col hover:bg-[#252424] transition-colors min-h-[220px]">
+        <div className="bg-[#1c1b1b] p-8 rounded-xl border border-[#424654]/10 flex flex-col hover:bg-[#252424] transition-colors">
           <div className="flex justify-between items-start mb-6">
             <h4 className="font-dm-sans text-sm font-bold text-[#e5e2e1]">Balanço do Mês</h4>
             <span
@@ -388,38 +372,20 @@ export default function DashboardPage() {
             <div className="flex items-baseline gap-1 mb-4">
               <span className={`text-lg font-bold font-dm-sans ${income - expense >= 0 ? "text-green-400" : "text-red-400"}`}>R$</span>
               <h3
-                className={`text-3xl font-bold font-dm-sans tracking-tight ${
-                  income - expense >= 0 ? "text-green-400" : "text-red-400"
-                }`}
+                className={`text-3xl font-bold font-dm-sans tracking-tight ${income - expense >= 0 ? "text-green-400" : "text-red-400"
+                  }`}
               >
                 {formatCurrency(Math.abs(income - expense)).replace("R$", "").trim()}
               </h3>
             </div>
 
-            <div className="space-y-1 mb-6">
-              <p className="text-[#c3c6d6] text-[10px] flex justify-between">
-                <span>Receitas:</span>
-                <span className="text-on-surface">{formatCurrency(income)}</span>
-              </p>
-              <p className="text-[#c3c6d6] text-[10px] flex justify-between">
-                <span>Despesas:</span>
-                <span className="text-on-surface">{formatCurrency(expense)}</span>
-              </p>
-            </div>
           </div>
 
-          <Link
-            href="/goals"
-            className="text-[#b0c6ff] text-[11px] font-bold flex items-center gap-1 hover:underline mt-auto"
-          >
-            Ver metas financeiras
-            <span className="material-symbols-outlined text-xs" translate="no">arrow_forward</span>
-          </Link>
         </div>
       </div>
 
-      {/* Row 2: Charts & Insights */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+      {/* Row 2: Charts, Goals & Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
         {/* Gastos por Categoria */}
         <div className="bg-surface-container-low p-8 rounded-xl">
           <div className="flex justify-between items-center mb-10">
@@ -487,6 +453,9 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* Próximas Metas */}
+        <UpcomingGoalsCard />
+
         {/* AI Insights Card */}
         <FinancialInsightsCard />
       </div>
@@ -530,9 +499,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <span
-                  className={`font-bold ${
-                    txn.type === "income" ? "text-green-400" : "text-red-400"
-                  }`}
+                  className={`font-bold ${txn.type === "income" ? "text-green-400" : "text-red-400"
+                    }`}
                 >
                   {txn.type === "income" ? "+" : "-"} {formatCurrency(Number(txn.amount))}
                 </span>
@@ -555,13 +523,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Modais */}
-      <EditBalanceModal
-        isOpen={showBalanceModal}
-        onClose={() => setShowBalanceModal(false)}
-        currentBalance={initialBalance}
-        onSave={handleSaveBalance}
-      />
+      <Toast toast={toast} />
 
       {/* FAB Mobile */}
       <Link
