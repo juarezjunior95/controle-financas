@@ -81,12 +81,13 @@ export class TransactionController {
         return;
       }
 
-      const { month, year, type } = req.query;
+      const { month, year, type, categoryId } = req.query;
 
       const transactions = await TransactionService.listByUser(userId, {
         month: month ? Number(month) : undefined,
         year: year ? Number(year) : undefined,
         type: type as 'income' | 'expense' | undefined,
+        categoryId: categoryId as string | undefined,
       });
 
       res.status(200).json({ data: transactions });
