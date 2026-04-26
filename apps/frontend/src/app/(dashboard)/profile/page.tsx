@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useUser as useClerkUser } from "@clerk/nextjs";
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
+import { formatNumber, parseCurrency } from "@/lib/storage";
 
 type FormStatus = "idle" | "loading" | "success" | "error";
 
@@ -19,6 +20,14 @@ export default function ProfilePage() {
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
+
+  // ── Initial Balance State ──────────────────────────────────────────
+  const [initialBalance, setInitialBalance] = useState<number | null>(null);
+  const [balanceInput, setBalanceInput] = useState("");
+  const [originalBalance, setOriginalBalance] = useState<number | null>(null);
+  const [balanceStatus, setBalanceStatus] = useState<FormStatus>("idle");
+  const [balanceErrorMsg, setBalanceErrorMsg] = useState("");
+  const [balanceSuccessMsg, setBalanceSuccessMsg] = useState("");
 
   // ── Avatar Upload State ────────────────────────────────────────────
   const [avatarStatus, setAvatarStatus] = useState<FormStatus>("idle");
@@ -36,6 +45,24 @@ export default function ProfilePage() {
       setOriginalName(name);
     }
   }, [user]);
+
+  // Load initial balance
+  useEffect(() => {
+    if (!token) return;
+    fetchAPI<{ initialBalance: number }>("/users/initial-balance", {
+      method: "GET",
+      token,
+    }).then(({ data, error }) => {
+      if (data) {
+        const val = data.initialBalance ?? 0;
+        setInitialBalance(val);
+        setOriginalBalance(val);
+        setBalanceInput(formatNumber(val));
+      } else if (error) {
+        console.error("[Profile] Erro ao carregar saldo inicial:", error.message);
+      }
+    });
+  }, [token]);
 
   // Auto-focus on mount
   useEffect(() => {
@@ -55,10 +82,25 @@ export default function ProfilePage() {
   const validationError = getValidationError(trimmedName);
   const canSave = hasChanged && !validationError && status !== "loading";
 
+  // ── Balance Derived State ──────────────────────────────────────────
+  const parsedBalance = parseCurrency(balanceInput);
+  const balanceChanged = initialBalance !== null && parsedBalance !== originalBalance;
+  const balanceValidationError = getBalanceValidationError(parsedBalance, balanceInput);
+  const canSaveBalance =
+    balanceChanged && !balanceValidationError && balanceStatus !== "loading";
+
   function getValidationError(name: string): string | null {
     if (!name) return "O nome não pode estar vazio.";
     if (name.length < 2) return "O nome deve ter pelo menos 2 caracteres.";
     if (name.length > 50) return "O nome não pode ter mais de 50 caracteres.";
+    return null;
+  }
+
+  function getBalanceValidationError(value: number, raw: string): string | null {
+    if (raw.trim() === "") return "O saldo inicial não pode estar vazio.";
+    if (isNaN(value)) return "Digite um valor numérico válido.";
+    if (value < 0) return "O saldo inicial não pode ser negativo.";
+    if (value > 999_999_999) return "Valor acima do limite permitido.";
     return null;
   }
 
@@ -109,6 +151,50 @@ export default function ProfilePage() {
     },
     [canSave, handleSave]
   );
+
+  // ── Save Initial Balance ───────────────────────────────────────────
+  const handleSaveBalance = useCallback(async () => {
+    if (!canSaveBalance || !token) return;
+
+    setBalanceStatus("loading");
+    setBalanceErrorMsg("");
+    setBalanceSuccessMsg("");
+
+    const { data, error } = await fetchAPI<{ initialBalance: number }>(
+      "/users/initial-balance",
+      {
+        method: "PUT",
+        token,
+        body: JSON.stringify({ initialBalance: parsedBalance }),
+      }
+    );
+
+    if (error) {
+      setBalanceStatus("error");
+      setBalanceErrorMsg(error.message || "Falha ao atualizar o saldo inicial.");
+      return;
+    }
+
+    if (data) {
+      const saved = data.initialBalance;
+      setInitialBalance(saved);
+      setOriginalBalance(saved);
+      setBalanceInput(formatNumber(saved));
+      setBalanceStatus("success");
+      setBalanceSuccessMsg("Saldo inicial atualizado com sucesso!");
+      setTimeout(() => {
+        setBalanceStatus("idle");
+        setBalanceSuccessMsg("");
+      }, 3000);
+    }
+  }, [canSaveBalance, token, parsedBalance]);
+
+  const handleCancelBalance = useCallback(() => {
+    setBalanceInput(formatNumber(originalBalance ?? 0));
+    setBalanceStatus("idle");
+    setBalanceErrorMsg("");
+    setBalanceSuccessMsg("");
+  }, [originalBalance]);
 
   // ── Avatar Upload ──────────────────────────────────────────────────
   const handleAvatarClick = () => {
@@ -483,6 +569,132 @@ export default function ProfilePage() {
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Additional Info Card */}
+      <div className="mt-6 bg-[#1c1b1b] rounded-2xl border border-[#424654]/20 p-8">
+        <h3 className="text-[#e5e2e1] font-dm-sans font-bold mb-4 flex items-center gap-2">
+          <span className="material-symbols-outlined text-[#b0c6ff]">account_balance_wallet</span>
+          Configurações financeiras
+        </h3>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="initial-balance-input"
+            className="block text-[#c3c6d6] text-xs font-source-sans-3 uppercase tracking-widest mb-2"
+          >
+            Saldo inicial
+          </label>
+          <p className="text-[#c3c6d6]/60 text-xs font-source-sans-3 mb-3">
+            Valor que você possuía antes de começar a usar o app. Usado como base para calcular seu saldo total.
+          </p>
+
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c3c6d6]/50 text-sm font-bold select-none">
+              R$
+            </span>
+            {initialBalance === null ? (
+              <div className="w-full bg-[#131313] border border-[#424654]/30 rounded-xl py-3.5 pl-11 pr-4 h-[50px] animate-pulse" />
+            ) : (
+              <input
+                id="initial-balance-input"
+                type="text"
+                inputMode="decimal"
+                value={balanceInput}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^\d,]/g, "");
+                  setBalanceInput(raw);
+                  if (balanceStatus === "error" || balanceStatus === "success") {
+                    setBalanceStatus("idle");
+                    setBalanceErrorMsg("");
+                    setBalanceSuccessMsg("");
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && canSaveBalance) {
+                    e.preventDefault();
+                    handleSaveBalance();
+                  }
+                }}
+                placeholder="0,00"
+                className={`w-full bg-[#131313] text-[#e5e2e1] pl-11 pr-4 py-3.5 rounded-xl border transition-all duration-200 outline-none font-source-sans-3 text-sm placeholder:text-[#c3c6d6]/30 ${
+                  balanceValidationError && balanceInput
+                    ? "border-red-500/50 focus:border-red-400 focus:ring-1 focus:ring-red-400/30"
+                    : "border-[#424654]/30 focus:border-[#b0c6ff]/50 focus:ring-1 focus:ring-[#b0c6ff]/20"
+                }`}
+              />
+            )}
+          </div>
+
+          {/* Inline validation */}
+          {balanceValidationError && balanceInput && (
+            <p className="mt-2 text-red-400 text-xs flex items-center gap-1.5 animate-in">
+              <span className="material-symbols-outlined text-xs">error</span>
+              {balanceValidationError}
+            </p>
+          )}
+        </div>
+
+        {/* Feedback Messages */}
+        {balanceStatus === "success" && balanceSuccessMsg && (
+          <div className="mt-4 flex items-center gap-3 bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-xl text-sm font-source-sans-3 animate-in">
+            <span
+              className="material-symbols-outlined text-lg"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              check_circle
+            </span>
+            {balanceSuccessMsg}
+          </div>
+        )}
+
+        {balanceStatus === "error" && balanceErrorMsg && (
+          <div className="mt-4 flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-source-sans-3 animate-in">
+            <span
+              className="material-symbols-outlined text-lg"
+              style={{ fontVariationSettings: "'FILL' 1" }}
+            >
+              cancel
+            </span>
+            {balanceErrorMsg}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-3 mt-6">
+          <button
+            onClick={handleSaveBalance}
+            disabled={!canSaveBalance}
+            className={`relative px-6 py-3 rounded-full text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+              canSaveBalance
+                ? "bg-gradient-to-br from-[#b0c6ff] to-[#0058cb] text-[#001945] hover:opacity-90 active:scale-95 shadow-lg shadow-[#0058cb]/20"
+                : "bg-[#353534] text-[#c3c6d6]/40 cursor-not-allowed"
+            }`}
+          >
+            {balanceStatus === "loading" ? (
+              <>
+                <span className="material-symbols-outlined text-lg animate-spin">
+                  progress_activity
+                </span>
+                Salvando...
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-lg">save</span>
+                Salvar alterações
+              </>
+            )}
+          </button>
+
+          {balanceChanged && balanceStatus !== "loading" && (
+            <button
+              onClick={handleCancelBalance}
+              className="px-6 py-3 rounded-full text-sm font-bold text-[#c3c6d6] hover:text-[#e5e2e1] hover:bg-[#353534] transition-all duration-200"
+            >
+              Cancelar
+            </button>
+          )}
         </div>
       </div>
 
