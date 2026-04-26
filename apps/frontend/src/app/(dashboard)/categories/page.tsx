@@ -9,6 +9,8 @@ import { Toast, useToast } from "@/components/ui/Toast";
 interface Category {
   id: string;
   name: string;
+  icon?: string;
+  color?: string;
 }
 
 export default function CategoriesPage() {
@@ -21,8 +23,25 @@ export default function CategoriesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editName, setEditName] = useState("");
+  const [editIcon, setEditIcon] = useState("label");
+  const [editColor, setEditColor] = useState("#b0c6ff");
   const [actionLoading, setActionLoading] = useState(false);
 
+  const icons = [
+    // Finance/Goals
+    "savings", "account_balance", "credit_card", "monetization_on", "wallet", "receipt_long", "trending_up", "account_balance_wallet",
+    // Lifestyle
+    "shopping_bag", "directions_car", "home", "medical_services", "restaurant", "flight",
+    // Activities & Objects
+    "sports_esports", "fitness_center", "school", "pets", "celebration", "star", "shopping_cart", "check_circle",
+    // Others
+    "payments", "more_horiz"
+  ];
+
+  const colors = [
+    "#b0c6ff", "#ffb59b", "#82f9d8", "#f8b0ff", "#ffe082",
+    "#ff8a80", "#b39ddb", "#4dd0e1", "#81c784", "#ffb74d"
+  ];
   const { toast, showToast } = useToast();
 
   const loadCategories = useCallback(async () => {
@@ -47,13 +66,13 @@ export default function CategoriesPage() {
 
   const getVisualAids = (name: string) => {
     const lowerName = name.toLowerCase();
-    if (lowerName.includes('alimentação') || lowerName.includes('comida')) return { icon: 'restaurant', color: 'primary' };
-    if (lowerName.includes('transporte') || lowerName.includes('carro')) return { icon: 'directions_car', color: 'secondary' };
-    if (lowerName.includes('moradia') || lowerName.includes('casa')) return { icon: 'home', color: 'tertiary' };
-    if (lowerName.includes('saúde') || lowerName.includes('farmacia')) return { icon: 'medical_services', color: 'error' };
-    if (lowerName.includes('lazer')) return { icon: 'sports_esports', color: 'primary' };
-    if (lowerName.includes('estudo')) return { icon: 'school', color: 'on-surface' };
-    return { icon: 'label', color: 'primary' };
+    if (lowerName.includes('alimentação') || lowerName.includes('comida')) return { icon: 'restaurant', color: '#ffb59b' };
+    if (lowerName.includes('transporte') || lowerName.includes('carro')) return { icon: 'directions_car', color: '#82f9d8' };
+    if (lowerName.includes('moradia') || lowerName.includes('casa')) return { icon: 'home', color: '#ffe082' };
+    if (lowerName.includes('saúde') || lowerName.includes('farmacia')) return { icon: 'medical_services', color: '#ff8a80' };
+    if (lowerName.includes('lazer')) return { icon: 'sports_esports', color: '#f8b0ff' };
+    if (lowerName.includes('estudo')) return { icon: 'school', color: '#b39ddb' };
+    return { icon: 'label', color: '#b0c6ff' };
   };
 
   const handleDelete = async () => {
@@ -81,7 +100,11 @@ export default function CategoriesPage() {
     const res = await fetchAPI(`/categories/${editingCategory.id}`, {
       method: "PUT",
       token,
-      body: JSON.stringify({ name: editName.trim() })
+      body: JSON.stringify({ 
+        name: editName.trim(),
+        icon: editIcon,
+        color: editColor
+      })
     });
     setActionLoading(false);
 
@@ -177,7 +200,13 @@ export default function CategoriesPage() {
                   {/* Action Buttons */}
                   <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     <button
-                      onClick={(e) => { e.stopPropagation(); setEditingCategory(category); setEditName(category.name); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setEditingCategory(category); 
+                        setEditName(category.name); 
+                        setEditIcon(category.icon || 'label');
+                        setEditColor(category.color || '#b0c6ff');
+                      }}
                       className="w-8 h-8 rounded-full bg-surface-container hover:bg-primary hover:text-on-primary flex items-center justify-center transition-colors shadow-sm"
                       title="Editar"
                     >
@@ -192,9 +221,15 @@ export default function CategoriesPage() {
                     </button>
                   </div>
 
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 bg-surface-container-highest text-on-surface-variant">
-                    <span className="material-symbols-outlined text-2xl">
-                      {aids.icon}
+                  <div 
+                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-all"
+                    style={{ 
+                      backgroundColor: category.color || aids.color,
+                      boxShadow: `0px 4px 12px ${(category.color || '#b0c6ff')}4D`
+                    }}
+                  >
+                    <span className="material-symbols-outlined text-2xl text-[#131313]">
+                      {category.icon || aids.icon}
                     </span>
                   </div>
                   <div>
@@ -276,16 +311,54 @@ export default function CategoriesPage() {
               </button>
             </div>
 
-            <div className="space-y-4 mb-8">
-              <label className="text-xs uppercase tracking-wider font-bold text-primary opacity-90">Nome da Categoria</label>
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") handleEdit(); }}
-                autoFocus
-                className="w-full bg-surface-container border border-outline-variant/20 rounded-xl h-14 px-4 font-body outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-on-surface"
-              />
+            <div className="space-y-6 mb-8 max-h-[60vh] overflow-y-auto px-2 custom-scrollbar">
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-wider font-bold text-primary opacity-90">Nome da Categoria</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  autoFocus
+                  className="w-full bg-surface-container border border-outline-variant/20 rounded-xl h-14 px-4 font-body outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all text-on-surface"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs uppercase tracking-wider font-bold text-primary opacity-90">Ícone</label>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 p-3 bg-surface-container rounded-xl border border-outline-variant/10 max-h-[200px] overflow-y-auto custom-scrollbar">
+                  {icons.map((icon) => (
+                    <button
+                      key={icon}
+                      onClick={() => setEditIcon(icon)}
+                      className={`w-10 h-10 flex flex-shrink-0 items-center justify-center rounded-lg transition-all ${
+                        editIcon === icon
+                          ? "bg-primary text-on-primary"
+                          : "hover:bg-surface-container-highest text-on-surface/60"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-xl">{icon}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs uppercase tracking-wider font-bold text-primary opacity-90">Cor</label>
+                <div className="flex flex-wrap gap-3 p-3 bg-surface-container rounded-xl border border-outline-variant/10">
+                  {colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setEditColor(color)}
+                      className={`w-8 h-8 rounded-full transition-all ${
+                        editColor === color
+                          ? "ring-2 ring-primary ring-offset-2 ring-offset-surface-container"
+                          : "hover:scale-110"
+                      }`}
+                      style={{ backgroundColor: color }}
+                    ></button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-4 w-full">
@@ -298,7 +371,13 @@ export default function CategoriesPage() {
               </button>
               <button
                 onClick={handleEdit}
-                disabled={actionLoading || !editName.trim() || editName.trim() === editingCategory.name}
+                disabled={
+                  actionLoading || 
+                  !editName.trim() || 
+                  (editName.trim() === editingCategory.name && 
+                   editIcon === (editingCategory.icon || 'label') && 
+                   editColor === (editingCategory.color || '#b0c6ff'))
+                }
                 className="flex-1 py-3 rounded-full font-bold bg-primary text-on-primary hover:scale-95 transition-transform disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {actionLoading ? <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span> : null}

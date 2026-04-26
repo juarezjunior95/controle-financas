@@ -13,10 +13,26 @@ interface EditGoalModalProps {
 }
 
 export function EditGoalModal({ goal, isOpen, onClose, onConfirm, isUpdating }: EditGoalModalProps) {
+  const icons = [
+    "savings", "account_balance", "wallet", "monetization_on",
+    "receipt_long", "trending_up", "account_balance_wallet", "payments",
+    "shopping_cart", "directions_car", "home", "medical_services",
+    "school", "sports_esports", "restaurant", "flight",
+    "fitness_center", "card_giftcard", "build", "more_horiz",
+    "smartphone", "computer", "stroller", "pets"
+  ];
+
+  const colors = [
+    "#b0c6ff", "#ffb59b", "#82f9d8", "#f8b0ff", "#ffe082",
+    "#ff8a80", "#b39ddb", "#4dd0e1", "#81c784", "#ffb74d"
+  ];
+
   const [formData, setFormData] = useState({
     title: goal.title,
     target_amount: goal.target_amount.toString(),
-    deadline: goal.deadline ? new Date(goal.deadline).toISOString().split('T')[0] : ""
+    deadline: goal.deadline ? new Date(goal.deadline).toISOString().split('T')[0] : "",
+    icon: goal.icon || "savings",
+    color: goal.color || "#b0c6ff"
   });
 
   useEffect(() => {
@@ -24,7 +40,9 @@ export function EditGoalModal({ goal, isOpen, onClose, onConfirm, isUpdating }: 
       setFormData({
         title: goal.title,
         target_amount: goal.target_amount.toString(),
-        deadline: goal.deadline ? new Date(goal.deadline).toISOString().split('T')[0] : ""
+        deadline: goal.deadline ? new Date(goal.deadline).toISOString().split('T')[0] : "",
+        icon: goal.icon || "savings",
+        color: goal.color || "#b0c6ff"
       });
     }
   }, [isOpen, goal]);
@@ -36,7 +54,9 @@ export function EditGoalModal({ goal, isOpen, onClose, onConfirm, isUpdating }: 
     onConfirm({
       title: formData.title,
       target_amount: parseFloat(formData.target_amount),
-      deadline: formData.deadline || undefined
+      deadline: formData.deadline || undefined,
+      icon: formData.icon,
+      color: formData.color
     });
   };
 
@@ -58,8 +78,15 @@ export function EditGoalModal({ goal, isOpen, onClose, onConfirm, isUpdating }: 
         </button>
 
         <div className="mb-8">
-          <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
-            <Edit2 className="w-8 h-8 text-primary" />
+          <div 
+            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all duration-300"
+            style={{ 
+              backgroundColor: `${formData.color}20`, 
+              color: formData.color,
+              boxShadow: `0 8px 32px ${formData.color}33`
+            }}
+          >
+            <span className="material-symbols-outlined text-3xl">{formData.icon}</span>
           </div>
           <h3 className="text-3xl font-dm-sans font-black mb-2 tracking-tight">Editar Meta</h3>
           <p className="text-on-surface-variant font-source-sans-3 text-lg opacity-80">
@@ -110,6 +137,51 @@ export function EditGoalModal({ goal, isOpen, onClose, onConfirm, isUpdating }: 
                 value={formData.deadline}
                 onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
               />
+            </div>
+          </div>
+
+          <div className="space-y-6 pt-2">
+            <div className="flex flex-col gap-3">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary px-1">
+                Ícone Representativo
+              </label>
+              <div className="grid grid-cols-6 sm:grid-cols-8 gap-2 p-3 bg-surface-container-highest/30 rounded-2xl border border-outline-variant/10 max-h-[160px] overflow-y-auto custom-scrollbar">
+                {icons.map((icon) => (
+                  <button
+                    key={icon}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, icon })}
+                    className={`w-10 h-10 flex flex-shrink-0 items-center justify-center rounded-xl transition-all ${
+                      formData.icon === icon
+                        ? "bg-primary text-on-primary shadow-lg scale-110"
+                        : "hover:bg-surface-container-high text-on-surface/60"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-xl">{icon}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <label className="text-[10px] uppercase tracking-widest font-bold text-primary px-1">
+                Acento Cromático
+              </label>
+              <div className="flex flex-wrap gap-3 p-3 bg-surface-container-highest/30 rounded-2xl border border-outline-variant/10">
+                {colors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, color })}
+                    className={`w-8 h-8 rounded-full transition-all ${
+                      formData.color === color
+                        ? "ring-2 ring-primary ring-offset-2 ring-offset-surface-container-low scale-110"
+                        : "hover:scale-110"
+                    }`}
+                    style={{ backgroundColor: color }}
+                  ></button>
+                ))}
+              </div>
             </div>
           </div>
 

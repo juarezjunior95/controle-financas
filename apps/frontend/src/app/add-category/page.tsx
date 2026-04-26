@@ -17,8 +17,8 @@ export default function AddCategoryPage() {
   const { token } = useAuth();
 
   const colors = [
-    "#b0c6ff", "#ffb59b", "#82f9d8", "#f8b0ff",
-    "#ffe082", "#ff8a80", "#b39ddb"
+    "#b0c6ff", "#ffb59b", "#82f9d8", "#f8b0ff", "#ffe082",
+    "#ff8a80", "#b39ddb", "#4dd0e1", "#81c784", "#ffb74d"
   ];
   
   const handleCreateCategory = async () => {
@@ -33,7 +33,11 @@ export default function AddCategoryPage() {
     const res = await fetchAPI('/categories', {
       method: 'POST',
       token,
-      body: JSON.stringify({ name: categoryName.trim() })
+      body: JSON.stringify({ 
+        name: categoryName.trim(),
+        icon: selectedIcon,
+        color: selectedColor
+      })
     });
 
     setIsSubmitting(false);
@@ -48,9 +52,14 @@ export default function AddCategoryPage() {
   };
 
   const icons = [
-    "shopping_bag", "directions_car", "home", "medical_services",
-    "sports_esports", "restaurant", "flight", "fitness_center",
-    "school", "payments", "pets", "more_horiz"
+    // Finance/Goals
+    "savings", "account_balance", "credit_card", "monetization_on", "wallet", "receipt_long", "trending_up", "account_balance_wallet",
+    // Lifestyle
+    "shopping_bag", "directions_car", "home", "medical_services", "restaurant", "flight",
+    // Activities & Objects
+    "sports_esports", "fitness_center", "school", "pets", "celebration", "star", "shopping_cart", "check_circle",
+    // Others
+    "payments", "more_horiz"
   ];
 
   return (
@@ -122,13 +131,13 @@ export default function AddCategoryPage() {
                     <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Símbolo Visual</label>
                     <span className="text-xs text-on-surface/40 font-body italic">Escolha um ícone representativo</span>
                   </div>
-                  <div className="grid grid-cols-6 gap-3 p-4 bg-surface-container-low rounded-xl border border-outline-variant/10">
+                  <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 p-4 bg-surface-container-low rounded-xl border border-outline-variant/10 max-h-[300px] overflow-y-auto custom-scrollbar">
                     {/* Icon Grid */}
                     {icons.map((icon) => (
                       <button
                         key={icon}
                         onClick={() => setSelectedIcon(icon)}
-                        className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all duration-200 ${selectedIcon === icon
+                        className={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl transition-all duration-200 ${selectedIcon === icon
                             ? "bg-surface-container-highest text-primary ring-2 ring-primary"
                             : "hover:bg-surface-container-high text-on-surface/60"
                           }`}
@@ -167,7 +176,7 @@ export default function AddCategoryPage() {
               <section className="space-y-6">
                 <div className="space-y-4">
                   <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Fluxo de Caixa</label>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-5 gap-3">
                     <label
                       className={`flex items-center justify-between p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container transition-all border ${selectedFlow === 'expense' ? 'border-primary/30 ring-1 ring-primary/30' : 'border-outline-variant/10'
                         }`}

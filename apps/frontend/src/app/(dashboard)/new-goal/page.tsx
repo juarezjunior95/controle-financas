@@ -6,51 +6,48 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
 import { 
-  Home, 
-  Car, 
-  Plane, 
-  GraduationCap, 
-  ShoppingBag, 
-  Heart, 
-  Briefcase, 
-  Utensils, 
-  Gamepad2, 
-  CircleDollarSign,
-  Calendar,
-  Lightbulb,
   ArrowLeft,
   AlertCircle,
-  Loader2
+  Loader2,
+  Lightbulb,
+  Calendar
 } from 'lucide-react';
 
 export default function NewGoalPage() {
   const router = useRouter();
   const { token } = useAuth();
   
+  const icons = [
+    // Finance/Goals
+    "savings", "account_balance", "credit_card", "monetization_on", "wallet", "receipt_long", "trending_up", "account_balance_wallet",
+    // Lifestyle
+    "shopping_bag", "directions_car", "home", "medical_services", "restaurant", "flight",
+    // Activities & Objects
+    "sports_esports", "fitness_center", "school", "pets", "celebration", "star", "shopping_cart", "check_circle",
+    // Others
+    "payments", "more_horiz"
+  ];
+
+  const colors = [
+    "#b0c6ff", "#ffb59b", "#82f9d8", "#f8b0ff", "#ffe082",
+    "#ff8a80", "#b39ddb", "#4dd0e1", "#81c784", "#ffb74d"
+  ];
+
   const [formData, setFormData] = useState({
     title: "",
     target_amount: "",
     deadline: "",
-    icon: "home",
+    icon: "savings",
     color: "#b0c6ff"
   });
 
   // Helper function to render the selected icon in preview
   const renderIcon = (iconName: string, className?: string) => {
-    const props = { className: className || "w-8 h-8" };
-    switch (iconName) {
-      case 'savings': return <CircleDollarSign {...props} />;
-      case 'home': return <Home {...props} />;
-      case 'car': return <Car {...props} />;
-      case 'plane': return <Plane {...props} />;
-      case 'graduation-cap': return <GraduationCap {...props} />;
-      case 'shopping-bag': return <ShoppingBag {...props} />;
-      case 'heart': return <Heart {...props} />;
-      case 'briefcase': return <Briefcase {...props} />;
-      case 'utensils': return <Utensils {...props} />;
-      case 'gamepad': return <Gamepad2 {...props} />;
-      default: return <CircleDollarSign {...props} />;
-    }
+    return (
+      <span className={`material-symbols-outlined ${className || "text-3xl"}`}>
+        {iconName}
+      </span>
+    );
   };
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,14 +75,16 @@ export default function NewGoalPage() {
       }),
     });
 
-    setIsSubmitting(false);
+    setIsSubmitting(true); 
 
     if (res.error) {
+      setIsSubmitting(false);
       setError(res.error.message || "Erro ao criar meta. Tente novamente.");
     } else {
       router.push("/goals");
     }
   };
+
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-12 bg-background">
       {/* Top Navigation Action */}
@@ -111,14 +110,14 @@ export default function NewGoalPage() {
             </p>
           </header>
 
-          <div className="space-y-8 bg-surface-container-low p-6 md:p-10 rounded-xl shadow-[0px_24px_48px_rgba(0,0,0,0.2)]">
+          <div className="space-y-8 bg-surface-container-low p-6 md:p-10 rounded-xl shadow-[0px_24px_48px_rgba(0,0,0,0.2)] border border-white/5">
             {/* Input: Name */}
             <div className="flex flex-col gap-2">
               <label className="text-[10px] uppercase tracking-widest font-bold text-primary px-1">
                 Nome da Meta
               </label>
               <input
-                className="bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-2 focus:ring-primary/50 placeholder:text-on-surface/30 font-headline font-medium transition-all outline-none"
+                className="bg-surface-container-highest border border-white/5 rounded-xl py-4 px-5 text-on-surface focus:ring-2 focus:ring-primary/50 placeholder:text-on-surface/30 font-headline font-medium transition-all outline-none"
                 placeholder="Ex: Reserva de Emergência"
                 type="text"
                 value={formData.title}
@@ -142,7 +141,7 @@ export default function NewGoalPage() {
                 <div className="relative">
                   <span className="absolute left-5 top-1/2 -translate-y-1/2 text-on-surface/40 font-headline font-bold">R$</span>
                   <input
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 pl-12 pr-5 text-on-surface focus:ring-2 focus:ring-primary/50 placeholder:text-on-surface/30 font-headline font-bold text-xl transition-all outline-none"
+                    className="w-full bg-surface-container-highest border border-white/5 rounded-xl py-4 pl-12 pr-5 text-on-surface focus:ring-2 focus:ring-primary/50 placeholder:text-on-surface/30 font-headline font-bold text-xl transition-all outline-none"
                     placeholder="0,00"
                     type="number"
                     step="0.01"
@@ -160,7 +159,7 @@ export default function NewGoalPage() {
                 </label>
                 <div className="relative">
                   <input
-                    className="w-full bg-surface-container-highest border-none rounded-xl py-4 px-5 text-on-surface focus:ring-2 focus:ring-primary/50 font-headline font-medium transition-all [color-scheme:dark] outline-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-5 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                    className="w-full bg-surface-container-highest border border-white/5 rounded-xl py-4 px-5 text-on-surface focus:ring-2 focus:ring-primary/50 font-headline font-medium transition-all [color-scheme:dark] outline-none [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-5 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                     type="date"
                     value={formData.deadline}
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
@@ -175,77 +174,17 @@ export default function NewGoalPage() {
               <label className="text-[10px] uppercase tracking-widest font-bold text-primary px-1">
                 Selecione um Ícone
               </label>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "savings" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'savings' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <CircleDollarSign className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "home" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'home' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <Home className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "car" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'car' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <Car className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "plane" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'plane' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <Plane className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "graduation-cap" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'graduation-cap' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <GraduationCap className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "shopping-bag" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'shopping-bag' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <ShoppingBag className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "heart" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'heart' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <Heart className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "briefcase" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'briefcase' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <Briefcase className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "utensils" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'utensils' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <Utensils className="w-6 h-6" />
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, icon: "gamepad" })}
-                  className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === 'gamepad' ? 'bg-primary-container text-on-primary-container scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
-                >
-                  <Gamepad2 className="w-6 h-6" />
-                </button>
+              <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 p-4 bg-surface-container rounded-xl border border-white/5 max-h-[300px] overflow-y-auto custom-scrollbar">
+                {icons.map((icon) => (
+                  <button 
+                    key={icon}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, icon })}
+                    className={`aspect-square rounded-xl flex items-center justify-center transition-all ${formData.icon === icon ? 'bg-primary text-on-primary scale-110 shadow-lg' : 'bg-surface-container-highest text-on-surface/40 hover:bg-surface-bright'}`}
+                  >
+                    <span className="material-symbols-outlined">{icon}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -254,53 +193,16 @@ export default function NewGoalPage() {
               <label className="text-[10px] uppercase tracking-widest font-bold text-primary px-1">
                 Cor de Destaque
               </label>
-              <div className="flex flex-wrap gap-4">
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color: "#b0c6ff" })}
-                  className={`w-10 h-10 rounded-full bg-[#b0c6ff] transition-all ${formData.color === '#b0c6ff' ? 'ring-offset-4 ring-offset-background ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color: "#ffb59b" })}
-                  className={`w-10 h-10 rounded-full bg-[#ffb59b] transition-all ${formData.color === '#ffb59b' ? 'ring-offset-4 ring-offset-background ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color: "#98FB98" })}
-                  className={`w-10 h-10 rounded-full bg-[#98FB98] transition-all ${formData.color === '#98FB98' ? 'ring-offset-4 ring-offset-background ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color: "#FFD700" })}
-                  className={`w-10 h-10 rounded-full bg-[#FFD700] transition-all ${formData.color === '#FFD700' ? 'ring-offset-4 ring-offset-background ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color: "#DDA0DD" })}
-                  className={`w-10 h-10 rounded-full bg-[#DDA0DD] transition-all ${formData.color === '#DDA0DD' ? 'ring-offset-4 ring-offset-background ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  type="button"
-                  onClick={() => setFormData({ ...formData, color: "#7FFFD4" })}
-                  className={`w-10 h-10 rounded-full bg-[#7FFFD4] transition-all ${formData.color === '#7FFFD4' ? 'ring-offset-4 ring-offset-background ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  onClick={() => setFormData({ ...formData, color: "#a1b4eb" })}
-                  className={`w-10 h-10 rounded-full bg-[#a1b4eb] transition-all ${formData.color === '#a1b4eb' ? 'ring-offset-4 ring-offset-[#131313] ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  onClick={() => setFormData({ ...formData, color: "#0058cb" })}
-                  className={`w-10 h-10 rounded-full bg-[#0058cb] transition-all ${formData.color === '#0058cb' ? 'ring-offset-4 ring-offset-[#131313] ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  onClick={() => setFormData({ ...formData, color: "#324575" })}
-                  className={`w-10 h-10 rounded-full bg-[#324575] transition-all ${formData.color === '#324575' ? 'ring-offset-4 ring-offset-[#131313] ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
-                <button 
-                  onClick={() => setFormData({ ...formData, color: "#93000a" })}
-                  className={`w-10 h-10 rounded-full bg-[#93000a] transition-all ${formData.color === '#93000a' ? 'ring-offset-4 ring-offset-[#131313] ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
-                ></button>
+              <div className="flex flex-wrap gap-4 p-4 bg-surface-container rounded-xl border border-white/5">
+                {colors.map((color) => (
+                  <button 
+                    key={color}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, color })}
+                    className={`w-10 h-10 rounded-full transition-all ${formData.color === color ? 'ring-offset-4 ring-offset-background ring-2 ring-primary scale-110' : 'hover:scale-110'}`}
+                    style={{ backgroundColor: color }}
+                  ></button>
+                ))}
               </div>
             </div>
           </div>
@@ -310,7 +212,7 @@ export default function NewGoalPage() {
             <button 
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex-1 md:flex-none bg-primary-container text-on-primary-container px-12 py-4 rounded-full font-headline font-bold text-lg hover:brightness-110 active:scale-95 transition-all shadow-[0_8px_30px_rgb(0,88,203,0.3)] disabled:opacity-50 flex items-center justify-center gap-3"
+              className="flex-1 md:flex-none bg-primary text-on-primary px-12 py-4 rounded-full font-headline font-bold text-lg hover:brightness-110 active:scale-95 transition-all shadow-[0_8px_30px_rgb(0,88,203,0.3)] disabled:opacity-50 flex items-center justify-center gap-3"
             >
               {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
               {isSubmitting ? "Criando..." : "Criar Meta"}
@@ -326,13 +228,20 @@ export default function NewGoalPage() {
 
         {/* Preview Sidebar (Right Column) - Hidden on Mobile */}
         <aside className="hidden xl:block xl:col-span-4 sticky top-12">
-          <div className="bg-surface-container p-8 rounded-xl border border-on-surface/5 overflow-hidden relative group">
+          <div className="bg-surface-container p-8 rounded-xl border border-on-surface/5 overflow-hidden relative group shadow-2xl">
             {/* Background Decoration */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-colors"></div>
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-12">
-                <div className="p-4 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${formData.color}20`, color: formData.color }}>
-                  {renderIcon(formData.icon)}
+                <div 
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300" 
+                  style={{ 
+                    backgroundColor: `${formData.color}20`, 
+                    color: formData.color,
+                    boxShadow: `0 8px 32px ${formData.color}33`
+                  }}
+                >
+                  {renderIcon(formData.icon, "text-3xl")}
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] uppercase font-bold tracking-widest text-on-surface/40">Status</p>
@@ -342,7 +251,9 @@ export default function NewGoalPage() {
                 </div>
               </div>
               <div className="space-y-1 mb-8">
-                <h3 className="text-2xl font-headline font-extrabold text-on-surface truncate">{formData.title || "Minha Nova Meta"}</h3>
+                <h3 className="text-2xl font-headline font-extrabold text-on-surface truncate">
+                  {formData.title || "Minha Nova Meta"}
+                </h3>
                 <p className="text-on-surface/60 font-body">
                   Meta estimada: <span className="text-on-surface font-semibold">
                     {formData.target_amount ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(formData.target_amount)) : "R$ 0,00"}
@@ -355,14 +266,14 @@ export default function NewGoalPage() {
                   <span className="text-on-surface/40 font-bold text-[10px] uppercase tracking-wider">Aguardando Início</span>
                 </div>
                 {/* Progress Bar */}
-                <div className="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                <div className="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
                   <div className="h-full bg-primary w-1 rounded-full"></div>
                 </div>
               </div>
               <div className="mt-12 pt-8 border-t border-on-surface/5 flex justify-between items-center">
                 <div>
                   <p className="text-[10px] uppercase font-bold tracking-widest text-on-surface/40">Prazo</p>
-                  <p className="text-sm font-headline font-bold">
+                  <p className="text-sm font-headline font-bold text-on-surface">
                     {formData.deadline ? new Date(formData.deadline).toLocaleDateString('pt-BR') : "Defina uma data"}
                   </p>
                 </div>
@@ -378,7 +289,7 @@ export default function NewGoalPage() {
               </div>
             </div>
           </div>
-          <div className="mt-8 p-6 bg-surface-container-low rounded-xl border-l-4 border-tertiary">
+          <div className="mt-8 p-6 bg-surface-container-low rounded-xl border-l-4 border-tertiary shadow-lg">
             <div className="flex gap-4">
               <Lightbulb className="w-6 h-6 text-tertiary flex-shrink-0" />
               <div>

@@ -2,16 +2,6 @@
 
 import React from "react";
 import { 
-  Home, 
-  Car, 
-  Plane, 
-  GraduationCap, 
-  ShoppingBag, 
-  Heart, 
-  Briefcase, 
-  Utensils, 
-  Gamepad2, 
-  CircleDollarSign,
   Edit2,
   Trash2,
   CheckCircle2,
@@ -43,28 +33,7 @@ export function GoalCard({ goal, onUpdateClick, onEditClick, onDeleteClick }: Go
 
   // Helper para ícones
   const getIcon = (title: string, customIcon?: string) => {
-    const iconName = customIcon || 'savings';
-    
-    switch (iconName) {
-      case 'savings': return <CircleDollarSign className="w-6 h-6" />;
-      case 'home': return <Home className="w-6 h-6" />;
-      case 'car': return <Car className="w-6 h-6" />;
-      case 'plane': return <Plane className="w-6 h-6" />;
-      case 'graduation-cap': return <GraduationCap className="w-6 h-6" />;
-      case 'shopping-bag': return <ShoppingBag className="w-6 h-6" />;
-      case 'heart': return <Heart className="w-6 h-6" />;
-      case 'briefcase': return <Briefcase className="w-6 h-6" />;
-      case 'utensils': return <Utensils className="w-6 h-6" />;
-      case 'gamepad': return <Gamepad2 className="w-6 h-6" />;
-      default:
-        // Fallback baseado no título
-        const t = title.toLowerCase();
-        if (t.includes('carro')) return <Car className="w-6 h-6" />;
-        if (t.includes('casa') || t.includes('imóvel')) return <Home className="w-6 h-6" />;
-        if (t.includes('viagem')) return <Plane className="w-6 h-6" />;
-        if (t.includes('estudo')) return <GraduationCap className="w-6 h-6" />;
-        return <CircleDollarSign className="w-6 h-6" />;
-    }
+    return <span className="material-symbols-outlined text-2xl">{customIcon || 'savings'}</span>;
   };
 
   return (
