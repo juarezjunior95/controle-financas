@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
+import { Toast, useToast } from "@/components/ui/Toast";
 
 interface Category {
   id: string;
@@ -41,6 +42,7 @@ export default function CategoriesPage() {
     "#b0c6ff", "#ffb59b", "#82f9d8", "#f8b0ff", "#ffe082",
     "#ff8a80", "#b39ddb", "#4dd0e1", "#81c784", "#ffb74d"
   ];
+  const { toast, showToast } = useToast();
 
   const loadCategories = useCallback(async () => {
     if (!token) return;
@@ -62,7 +64,6 @@ export default function CategoriesPage() {
     }
   }, [isAuthenticated, token, loadCategories]);
 
-  // Função para retornar ícone visual baseado no nome (fallback temporário)
   const getVisualAids = (name: string) => {
     const lowerName = name.toLowerCase();
     if (lowerName.includes('alimentação') || lowerName.includes('comida')) return { icon: 'restaurant', color: '#ffb59b' };
@@ -84,9 +85,11 @@ export default function CategoriesPage() {
     setActionLoading(false);
 
     if (res.error) {
-      alert("Erro ao excluir: " + (res.error.message || "Erro desconhecido"));
+      setDeletingId(null);
+      showToast("Erro ao excluir: " + (res.error.message || "Erro desconhecido"), "error");
     } else {
       setDeletingId(null);
+      showToast("Categoria excluída com sucesso.", "success");
       loadCategories();
     }
   };
@@ -106,16 +109,19 @@ export default function CategoriesPage() {
     setActionLoading(false);
 
     if (res.error) {
-      alert("Erro ao salvar: " + (res.error.message || "Erro desconhecido"));
+      showToast("Erro ao salvar: " + (res.error.message || "Erro desconhecido"), "error");
     } else {
       setEditingCategory(null);
       setEditName("");
+      showToast("Categoria atualizada com sucesso.", "success");
       loadCategories();
     }
   };
 
   return (
     <div className="flex flex-col gap-8 w-full">
+      <Toast toast={toast} />
+
       <header className="flex items-center gap-4 w-full">
         <h2 className="text-2xl font-bold font-dm-sans tracking-tight text-[#b0c6ff]">
           Categorias
@@ -144,10 +150,18 @@ export default function CategoriesPage() {
         </div>
 
         {/* Feedback / Linhas de Estado */}
-        {isLoading && categories.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-on-surface-variant">
-            <span className="material-symbols-outlined animate-spin text-4xl mb-4 text-primary">progress_activity</span>
-            <p className="font-body">Carregando categorias...</p>
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-surface-container-high rounded-2xl p-6 border border-outline-variant/10 animate-pulse"
+              >
+                <div className="w-12 h-12 rounded-xl bg-surface-container-highest mb-6" />
+                <div className="h-5 w-3/4 bg-surface-container-highest rounded-lg mb-2" />
+                <div className="h-3 w-1/2 bg-surface-container-highest rounded-lg" />
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="p-6 bg-error/10 border border-error/20 rounded-2xl text-center">
@@ -168,6 +182,13 @@ export default function CategoriesPage() {
             <p className="text-on-surface-variant font-body mb-6 text-center max-w-sm">
               Você ainda não cadastrou nenhuma categoria. Cadastre a primeira para organizar suas transações.
             </p>
+            <Link
+              href="/add-category"
+              className="bg-primary text-on-primary px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
+            >
+              <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>add_circle</span>
+              Adicionar primeira categoria
+            </Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
@@ -213,7 +234,6 @@ export default function CategoriesPage() {
                   </div>
                   <div>
                     <h3 className="font-dm-sans text-lg font-bold truncate" title={category.name}>{category.name}</h3>
-                    {/* Placeholder para integração futura com saldo por categoria */}
                     <p className="text-on-surface-variant text-xs mt-1">
                       Gerenciamento ativo
                     </p>

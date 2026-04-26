@@ -10,6 +10,7 @@ import { FinancialInsightsCard } from "@/components/dashboard/FinancialInsightsC
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
 import { formatCurrency } from "@/lib/storage";
+import { Toast, useToast } from "@/components/ui/Toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -70,8 +71,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [showBalanceModal, setShowBalanceModal] = useState(false);
-
   const [isSavingBalance, setIsSavingBalance] = useState(false);
+  const { toast, showToast } = useToast();
 
   // ─── Fetch dashboard summary + transactions do mês ─────────────────────────
   const fetchData = useCallback(async () => {
@@ -146,7 +147,7 @@ export default function DashboardPage() {
         { method: "PUT", token, body: JSON.stringify({ initialBalance: value }) }
       );
       if (err) {
-        alert("Erro ao salvar saldo: " + err.message);
+        showToast("Erro ao salvar saldo: " + err.message, "error");
       } else if (data) {
         setSummary((prev) =>
           prev
@@ -160,6 +161,7 @@ export default function DashboardPage() {
             : prev
         );
         setShowBalanceModal(false);
+        showToast("Saldo inicial atualizado com sucesso!", "success");
         router.refresh();
       }
       setIsSavingBalance(false);
@@ -179,11 +181,72 @@ export default function DashboardPage() {
   // Só mostra loading de tela inteira na primeira carga
   if (isLoading && !summary) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <span className="material-symbols-outlined animate-spin text-4xl text-primary">
-          progress_activity
-        </span>
-      </div>
+      <>
+        {/* Header skeleton */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="space-y-3">
+            <div className="h-8 w-56 bg-[#1c1b1b] rounded-xl animate-pulse" />
+            <div className="h-5 w-36 bg-[#1c1b1b] rounded-lg animate-pulse" />
+          </div>
+          <div className="h-10 w-40 bg-[#1c1b1b] rounded-full animate-pulse" />
+        </div>
+
+        {/* Bento grid skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-[#1c1b1b] p-8 rounded-xl border border-[#424654]/10 animate-pulse">
+              <div className="w-10 h-10 rounded-2xl bg-[#252424] mb-8" />
+              <div className="h-3 w-24 bg-[#252424] rounded mb-2" />
+              <div className="h-9 w-32 bg-[#252424] rounded-lg" />
+            </div>
+          ))}
+        </div>
+
+        {/* Row 2 skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+          <div className="bg-[#1c1b1b] p-8 rounded-xl animate-pulse">
+            <div className="h-5 w-40 bg-[#252424] rounded mb-10" />
+            <div className="flex items-center gap-8">
+              <div className="w-40 h-40 rounded-full bg-[#252424] flex-shrink-0" />
+              <div className="flex-1 space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-4 bg-[#252424] rounded-lg" />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="bg-[#1c1b1b] p-8 rounded-xl animate-pulse">
+            <div className="h-5 w-32 bg-[#252424] rounded mb-6" />
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-4 bg-[#252424] rounded-lg" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Transactions skeleton */}
+        <div className="mt-8 bg-[#1c1b1b] p-8 rounded-xl animate-pulse">
+          <div className="flex justify-between items-center mb-6">
+            <div className="h-5 w-40 bg-[#252424] rounded" />
+            <div className="h-4 w-16 bg-[#252424] rounded" />
+          </div>
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center justify-between p-4 bg-[#252424] rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-[#353534]" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-32 bg-[#353534] rounded" />
+                    <div className="h-3 w-20 bg-[#353534] rounded" />
+                  </div>
+                </div>
+                <div className="h-5 w-20 bg-[#353534] rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
     );
   }
 
@@ -210,6 +273,7 @@ export default function DashboardPage() {
 
   return (
     <>
+      <Toast toast={toast} />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
         <div>
@@ -428,15 +492,15 @@ export default function DashboardPage() {
       </div>
 
       {/* Últimas Transações do Mês */}
-      {transactions.length > 0 && (
-        <div className="mt-8 bg-surface-container-low p-8 rounded-xl">
-          <div className="flex justify-between items-center mb-6">
-            <h4 className="font-dm-sans text-lg font-bold text-[#e5e2e1]">Últimas Transações</h4>
-            <Link href="/transactions" className="text-primary text-sm hover:underline">
-              Ver todas
-            </Link>
-          </div>
+      <div className="mt-8 bg-surface-container-low p-8 rounded-xl">
+        <div className="flex justify-between items-center mb-6">
+          <h4 className="font-dm-sans text-lg font-bold text-[#e5e2e1]">Últimas Transações</h4>
+          <Link href="/transactions" className="text-primary text-sm hover:underline">
+            Ver todas
+          </Link>
+        </div>
 
+        {transactions.length > 0 ? (
           <div className="space-y-3">
             {transactions.slice(0, 5).map((txn) => (
               <div
@@ -475,8 +539,21 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <span className="material-symbols-outlined text-4xl text-[#424654] mb-3">receipt_long</span>
+            <p className="text-[#c3c6d6] text-sm mb-1">Nenhuma transação registrada este mês</p>
+            <p className="text-[#c3c6d6]/50 text-xs mb-4">Adicione receitas e despesas para acompanhar seu fluxo.</p>
+            <Link
+              href="/new-transaction"
+              className="text-[#b0c6ff] text-sm font-bold hover:underline flex items-center gap-1"
+            >
+              <span className="material-symbols-outlined text-sm">add_circle</span>
+              Adicionar primeiro lançamento
+            </Link>
+          </div>
+        )}
+      </div>
 
       {/* Modais */}
       <EditBalanceModal

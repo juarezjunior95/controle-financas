@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
+import { formatNumber, parseCurrency } from "@/lib/storage";
 
 interface Category {
   id: string;
@@ -82,10 +83,7 @@ export default function NewTransactionPage() {
     setSuccess(false); // Evitar conflito entre o sucesso e erro
 
     try {
-      // Limpar o valor (remover R$, etc se necessário, mas aqui é simples)
-      const numericAmount = parseFloat(amount.replace(',', '.'));
-
-      if (isNaN(numericAmount) || numericAmount <= 0) {
+      if (isNaN(amountRaw) || amountRaw <= 0) {
         throw new Error("Por favor, insira um valor válido.");
       }
 
@@ -94,7 +92,7 @@ export default function NewTransactionPage() {
         token,
         body: JSON.stringify({
           type,
-          amount: numericAmount,
+          amount: amountRaw,
           date,
           category,
           description,
@@ -184,7 +182,7 @@ export default function NewTransactionPage() {
                 disabled={loading}
                 onClick={() => setType("income")}
                 aria-pressed={type === 'income'}
-                className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 focus-visible:ring-2 focus-visible:ring-primary outline-none ${type === 'income' ? 'bg-error text-on-error shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
+                className={`flex-1 py-2 px-4 rounded-full text-sm font-bold transition-all duration-300 focus-visible:ring-2 focus-visible:ring-primary outline-none ${type === 'income' ? 'bg-[#69f0ae] text-[#003018] shadow-lg' : 'text-on-surface-variant hover:text-on-surface'}`}
               >
                 Receita
               </button>
@@ -194,16 +192,22 @@ export default function NewTransactionPage() {
             <div className="group">
               <label htmlFor="amount" className="block text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-2 ml-1">Valor da Transação</label>
               <div className="relative flex items-baseline">
-                <span className="text-2xl font-headline font-light text-primary mr-2">R$</span>
+                <span className={`text-2xl font-headline font-light mr-2 ${type === 'income' ? 'text-[#69f0ae]' : 'text-primary'}`}>R$</span>
                 <input
                   id="amount"
                   className="bg-transparent border-none p-0 text-5xl md:text-6xl font-headline font-black text-on-surface placeholder:text-surface-variant focus:ring-2 focus:ring-primary w-full tracking-tighter outline-none"
                   placeholder="0,00"
                   type="text"
+                  inputMode="numeric"
                   required
                   disabled={loading}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  value={amountDisplay}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '');
+                    const numeric = Number(digits) / 100;
+                    setAmountRaw(numeric);
+                    setAmountDisplay(numeric > 0 ? formatNumber(numeric) : '');
+                  }}
                 />
               </div>
               <div className="h-px w-full bg-outline-variant/20 group-focus-within:bg-primary transition-colors mt-2"></div>
