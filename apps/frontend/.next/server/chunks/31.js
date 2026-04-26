@@ -1,0 +1,1 @@
+"use strict";exports.id=31,exports.ids=[31],exports.modules={4031:(e,s,o)=>{o.r(s),o.d(s,{KeylessCookieSync:()=>t});let t=(0,o(3189).createProxy)(String.raw`E:\Git\controle-financas\node_modules\@clerk\nextjs\dist\esm\app-router\client\keyless-cookie-sync.js#KeylessCookieSync`)}};

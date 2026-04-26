@@ -275,4 +275,64 @@ export class CategoryService {
 
     return { id };
   }
+
+  /**
+   * Lista categorias com estatísticas do mês atual.
+   */
+  static async listWithStats(clerkId: string, month?: number, year?: number) {
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+    });
+
+    if (!user) {
+      throw new Error('Usuário não sincronizado no banco local.');
+    }
+
+    const now = new Date();
+    const filterYear = year || now.getFullYear();
+    const filterMonthIndex = (month !== undefined ? month : now.getMonth() + 1) - 1;
+
+    const monthStart = new Date(filterYear, filterMonthIndex, 1);
+    const monthEnd = new Date(filterYear, filterMonthIndex + 1, 0, 23, 59, 59, 999);
+
+    // 1. Buscar categorias
+    const categories = await this.listByUser(clerkId);
+
+    // 2. Buscar somas de transações por categoria no mês
+    const stats = await prisma.transaction.groupBy({
+      by: ['categoryId', 'type'],
+      where: {
+        userId: user.id,
+        occurredOn: {
+          gte: monthStart,
+          lte: monthEnd,
+        },
+      },
+      _sum: { amount: true },
+      _count: { id: true },
+    });
+
+    // 3. Mapear categorias com suas estatísticas
+    return categories.map((category) => {
+      const categoryStats = stats.filter((s) => s.categoryId === category.id);
+      
+      const income = categoryStats
+        .filter((s) => s.type === 'income')
+        .reduce((acc, s) => acc + Number(s._sum.amount || 0), 0);
+        
+      const expense = categoryStats
+        .filter((s) => s.type === 'expense')
+        .reduce((acc, s) => acc + Number(s._sum.amount || 0), 0);
+        
+      const transactionCount = categoryStats.reduce((acc, s) => acc + (s._count.id || 0), 0);
+
+      return {
+        ...category,
+        monthlyAmount: income - expense, // Net amount (receita - despesa)
+        expense,
+        income,
+        transactionCount,
+      };
+    });
+  }
 }

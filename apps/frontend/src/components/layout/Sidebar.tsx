@@ -6,9 +6,9 @@ import { useAuth } from "@/lib/auth";
 
 const MENU_ITEMS = [
   { href: "/dashboard", icon: "dashboard", label: "Dashboard" },
-  { href: "/transactions", icon: "account_balance_wallet", label: "Transactions" },
-  { href: "/categories", icon: "pie_chart", label: "Budgets" },
-  { href: "/goals", icon: "flag", label: "Goals" },
+  { href: "/transactions", icon: "account_balance_wallet", label: "Transações" },
+  { href: "/categories", icon: "pie_chart", label: "Categorias" },
+  { href: "/goals", icon: "flag", label: "Metas" },
 ];
 
 export function Sidebar() {
@@ -25,8 +25,8 @@ export function Sidebar() {
   return (
     <aside className="h-screen w-64 hidden md:flex flex-col bg-[#1c1b1b] py-8 space-y-2 shadow-[24px_0_48px_rgba(0,0,0,0.4)] z-50 shrink-0">
       <div className="px-6 mb-8">
-        <h1 className="text-[#e5e2e1] text-xl font-black tracking-tighter">Vault</h1>
-        <p className="text-[#c3c6d6] font-source-sans-3 text-xs opacity-60">Premium Tier</p>
+        <h1 className="text-[#e5e2e1] text-xl font-black tracking-tighter">Finança Pró</h1>
+        <p className="text-[#c3c6d6] font-source-sans-3 text-xs opacity-60">Assinatura Premium</p>
       </div>
 
       <nav className="flex-1 space-y-1">
@@ -94,14 +94,14 @@ export function Sidebar() {
             className="text-[#c3c6d6] py-2 flex items-center space-x-3 hover:text-[#e5e2e1] transition-colors"
           >
             <span className="material-symbols-outlined">help</span>
-            <span className="font-source-sans-3 text-sm">Help</span>
+            <span className="font-source-sans-3 text-sm">Ajuda</span>
           </Link>
           <button
             onClick={() => logout()}
             className="w-full text-[#c3c6d6] py-2 flex items-center space-x-3 hover:text-error transition-colors"
           >
             <span className="material-symbols-outlined">logout</span>
-            <span className="font-source-sans-3 text-sm">Sign Out</span>
+            <span className="font-source-sans-3 text-sm">Sair</span>
           </button>
         </div>
       </div>

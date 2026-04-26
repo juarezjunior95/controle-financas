@@ -122,6 +122,7 @@ try {
 
   // Rotas de categorias
   apiRouter.post('/categories', requireAuthentication, CategoryController.create);
+  apiRouter.get('/categories/stats', requireAuthentication, CategoryController.listWithStats);
   apiRouter.get('/categories', requireAuthentication, CategoryController.list);
   apiRouter.put('/categories/:id', requireAuthentication, CategoryController.update);
   apiRouter.delete('/categories/:id', requireAuthentication, CategoryController.delete);

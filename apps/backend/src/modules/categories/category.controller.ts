@@ -165,4 +165,29 @@ export class CategoryController {
       res.status(500).json({ error: { code: 'INTERNAL_SERVER_ERROR', message: error.message } });
     }
   }
+
+  /**
+   * Endpoint: GET /api/v1/categories/stats
+   */
+  static async listWithStats(req: Request, res: Response) {
+    try {
+      const userId = (req as AuthenticatedRequest).auth?.userId;
+      const { month, year } = req.query;
+
+      if (!userId) {
+        res.status(401).json({ error: 'Não autorizado' });
+        return;
+      }
+
+      const stats = await CategoryService.listWithStats(
+        userId,
+        month ? Number(month) : undefined,
+        year ? Number(year) : undefined
+      );
+
+      res.status(200).json({ data: stats });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

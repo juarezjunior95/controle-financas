@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (userId) {
         try {
           const t = await getToken();
-          setToken(t);
+          setToken((prev) => (prev !== t ? t : prev));
         } catch (e) {
           console.error("[Auth] Erro ao obter token do Clerk:", e);
           setToken(null);

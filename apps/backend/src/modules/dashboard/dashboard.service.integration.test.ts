@@ -46,6 +46,11 @@ describe('[INTEGRATION] DashboardService.getSummary', () => {
         // Segunda chamada: resumo mensal atual
         { type: 'income', _sum: { amount: '800.00' } },
         { type: 'expense', _sum: { amount: '350.00' } },
+      ])
+      .mockResolvedValueOnce([
+        // Terceira chamada: resumo do mês anterior
+        { type: 'income', _sum: { amount: '500.00' } },
+        { type: 'expense', _sum: { amount: '200.00' } },
       ]);
 
     const result = await DashboardService.getSummary(MOCK_USER.clerkId);
@@ -62,7 +67,8 @@ describe('[INTEGRATION] DashboardService.getSummary', () => {
     (prisma.user.findUnique as jest.Mock).mockResolvedValue(userSemTransacoes);
     (prisma.transaction.groupBy as jest.Mock)
       .mockResolvedValueOnce([]) // nenhuma transação histórica
-      .mockResolvedValueOnce([]); // nenhuma transação no mês
+      .mockResolvedValueOnce([]) // nenhuma transação no mês atual
+      .mockResolvedValueOnce([]); // nenhuma transação no mês anterior
 
     const result = await DashboardService.getSummary(MOCK_USER.clerkId);
 
@@ -92,7 +98,8 @@ describe('[INTEGRATION] DashboardService.getSummary', () => {
       ])
       .mockResolvedValueOnce([
         { type: 'expense', _sum: { amount: '500.00' } },
-      ]);
+      ])
+      .mockResolvedValueOnce([]); // mês anterior zerado
 
     const result = await DashboardService.getSummary(MOCK_USER.clerkId);
 
@@ -106,9 +113,9 @@ describe('[INTEGRATION] DashboardService.getSummary', () => {
 
     await DashboardService.getSummary(MOCK_USER.clerkId);
 
-    // Verifica que ambas as chamadas ao groupBy usam o userId correto
+    // Verifica que todas as 3 chamadas ao groupBy usam o userId correto
     const calls = (prisma.transaction.groupBy as jest.Mock).mock.calls;
-    expect(calls.length).toBe(2);
+    expect(calls.length).toBe(3);
     calls.forEach((call: any[]) => {
       expect(call[0]).toMatchObject({
         where: expect.objectContaining({ userId: MOCK_USER.id }),
@@ -125,7 +132,8 @@ describe('[INTEGRATION] DashboardService.getSummary', () => {
       ])
       .mockResolvedValueOnce([
         { type: 'expense', _sum: { amount: '50.00' } },
-      ]);
+      ])
+      .mockResolvedValueOnce([]);
 
     const result = await DashboardService.getSummary(MOCK_USER.clerkId, { month: 4, year: 2026 });
 

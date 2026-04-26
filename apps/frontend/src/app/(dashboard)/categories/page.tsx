@@ -5,16 +5,24 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
 import { Toast, useToast } from "@/components/ui/Toast";
+import { MonthSelector } from "@/components/dashboard/MonthSelector";
 
 interface Category {
   id: string;
   name: string;
   icon?: string;
   color?: string;
+  monthlyAmount?: number;
+  transactionCount?: number;
 }
 
 export default function CategoriesPage() {
   const { token, isAuthenticated } = useAuth();
+  
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,11 +52,17 @@ export default function CategoriesPage() {
   ];
   const { toast, showToast } = useToast();
 
+  const handleMonthChange = useCallback((month: number, year: number) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
+  }, []);
+
   const loadCategories = useCallback(async () => {
     if (!token) return;
     setIsLoading(true);
     setError(null);
-    const res = await fetchAPI('/categories', { token });
+    const month = selectedMonth + 1;
+    const res = await fetchAPI(`/categories/stats?month=${month}&year=${selectedYear}`, { token });
 
     if (res.error) {
       setError(res.error.message || "Erro ao carregar categorias");
@@ -56,7 +70,7 @@ export default function CategoriesPage() {
       setCategories(res.data || []);
     }
     setIsLoading(false);
-  }, [token]);
+  }, [token, selectedMonth, selectedYear]);
 
   useEffect(() => {
     if (isAuthenticated && token) {
@@ -64,15 +78,13 @@ export default function CategoriesPage() {
     }
   }, [isAuthenticated, token, loadCategories]);
 
-  const getVisualAids = (name: string) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('alimentação') || lowerName.includes('comida')) return { icon: 'restaurant', color: '#ffb59b' };
-    if (lowerName.includes('transporte') || lowerName.includes('carro')) return { icon: 'directions_car', color: '#82f9d8' };
-    if (lowerName.includes('moradia') || lowerName.includes('casa')) return { icon: 'home', color: '#ffe082' };
-    if (lowerName.includes('saúde') || lowerName.includes('farmacia')) return { icon: 'medical_services', color: '#ff8a80' };
-    if (lowerName.includes('lazer')) return { icon: 'sports_esports', color: '#f8b0ff' };
-    if (lowerName.includes('estudo')) return { icon: 'school', color: '#b39ddb' };
-    return { icon: 'label', color: '#b0c6ff' };
+
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
   };
 
   const handleDelete = async () => {
@@ -122,10 +134,17 @@ export default function CategoriesPage() {
     <div className="flex flex-col gap-8 w-full">
       <Toast toast={toast} />
 
-      <header className="flex items-center gap-4 w-full">
-        <h2 className="text-2xl font-bold font-dm-sans tracking-tight text-[#b0c6ff]">
-          Categorias
-        </h2>
+      <header className="flex flex-col md:flex-row md:items-end justify-between w-full mb-4">
+        <div>
+          <h2 className="text-2xl font-bold font-dm-sans tracking-tight text-[#b0c6ff] mb-2">
+            Categorias
+          </h2>
+          <MonthSelector
+            month={selectedMonth}
+            year={selectedYear}
+            onChange={handleMonthChange}
+          />
+        </div>
       </header>
 
       {/* Category Content */}
@@ -191,57 +210,88 @@ export default function CategoriesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
             {categories.map((category) => {
-              const aids = getVisualAids(category.name);
+              const icon = category.icon || 'label';
+              const color = category.color || '#b0c6ff';
+              
               return (
-                <div key={category.id} className="relative bg-surface-container-high rounded-2xl p-6 flex flex-col justify-between group hover:bg-surface-container-highest transition-all cursor-pointer border border-outline-variant/10 hover:border-primary/30 overflow-hidden">
+                <div 
+                  key={category.id} 
+                  className="relative bg-[#1a1a1a] rounded-[32px] p-8 flex flex-col justify-between group hover:bg-[#222] transition-all cursor-pointer border border-white/5 hover:border-white/10 overflow-hidden min-h-[180px]"
+                >
+                  {/* Background Icon Watermark */}
+                  <div className="absolute -bottom-4 -right-4 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+                    <span className="material-symbols-outlined text-[140px] rotate-12">
+                      {icon}
+                    </span>
+                  </div>
 
                   {/* Action Buttons */}
-                  <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                     <button
                       onClick={(e) => { 
                         e.stopPropagation(); 
                         setEditingCategory(category); 
                         setEditName(category.name); 
-                        setEditIcon(category.icon || 'label');
-                        setEditColor(category.color || '#b0c6ff');
+                        setEditIcon(icon);
+                        setEditColor(color);
                       }}
-                      className="w-8 h-8 rounded-full bg-surface-container hover:bg-primary hover:text-on-primary flex items-center justify-center transition-colors shadow-sm"
+                      className="w-10 h-10 rounded-full bg-white/5 hover:bg-primary hover:text-on-primary flex items-center justify-center transition-colors backdrop-blur-md"
                       title="Editar"
                     >
-                      <span className="material-symbols-outlined text-[18px]">edit</span>
+                      <span className="material-symbols-outlined text-[20px]">edit</span>
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setDeletingId(category.id); }}
-                      className="w-8 h-8 rounded-full bg-surface-container hover:bg-error hover:text-on-error flex items-center justify-center transition-colors shadow-sm"
+                      className="w-10 h-10 rounded-full bg-white/5 hover:bg-error hover:text-on-error flex items-center justify-center transition-colors backdrop-blur-md"
                       title="Excluir"
                     >
-                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      <span className="material-symbols-outlined text-[20px]">delete</span>
                     </button>
                   </div>
 
-                  <div 
-                    className="w-12 h-12 rounded-xl flex items-center justify-center mb-6 transition-all"
-                    style={{ 
-                      backgroundColor: category.color || aids.color,
-                      boxShadow: `0px 4px 12px ${(category.color || '#b0c6ff')}4D`
-                    }}
-                  >
-                    <span className="material-symbols-outlined text-2xl text-[#131313]">
-                      {category.icon || aids.icon}
-                    </span>
+                  <div className="flex items-start justify-between">
+                    <div 
+                      className="w-16 h-16 rounded-[20px] flex items-center justify-center mb-6 transition-all"
+                      style={{ 
+                        backgroundColor: color + '15',
+                        border: `1px solid ${color}33`
+                      }}
+                    >
+                      <span 
+                        className="material-symbols-outlined text-3xl"
+                        style={{ color: color }}
+                      >
+                        {icon}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-dm-sans text-lg font-bold truncate" title={category.name}>{category.name}</h3>
-                    <p className="text-on-surface-variant text-xs mt-1">
-                      Gerenciamento ativo
-                    </p>
+
+                  <div className="flex items-end justify-between mt-auto">
+                    <div>
+                      <h3 className="font-dm-sans text-2xl font-bold text-white mb-1">{category.name}</h3>
+                      <p className="text-white/40 text-sm font-medium">
+                        {category.name.toLowerCase() === 'outros' 
+                          ? 'Despesas não categorizadas' 
+                          : `${category.transactionCount || 0} ${category.transactionCount === 1 ? 'Transação' : 'Transações'} este mês`}
+                      </p>
+                    </div>
+                    
+                    <div className="text-right">
+                      <div className={`text-lg font-bold font-dm-sans ${
+                        (category.monthlyAmount || 0) > 0 ? "text-green-400" :
+                        (category.monthlyAmount || 0) < 0 ? "text-red-400" : "text-white"
+                      }`}>
+                        {(category.monthlyAmount || 0) > 0 ? "+" : (category.monthlyAmount || 0) < 0 ? "-" : ""} {formatCurrency(Math.abs(category.monthlyAmount || 0))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
             })}
           </div>
+
         )}
 
         {/* Pro-tip/Visual Aid */}
@@ -252,7 +302,7 @@ export default function CategoriesPage() {
             </span>
             <div>
               <h4 className="font-bold text-secondary mb-1">
-                Dica do Vault
+                Dica do Finança Pró
               </h4>
               <p className="text-on-surface-variant text-sm leading-relaxed">
                 Categorias com cores personalizadas ajudam você a identificar

@@ -48,7 +48,7 @@ export function UpcomingGoalsCard() {
     .filter(g => g.status === 'active')
     .slice(0, 3);
 
-  if (isLoading) {
+  if (isLoading && goals.length === 0) {
     return (
       <div className="bg-[#1c1b1b] p-8 rounded-2xl border border-[#424654]/10 animate-pulse min-h-[340px]">
         <div className="h-6 w-32 bg-[#252424] rounded mb-8" />

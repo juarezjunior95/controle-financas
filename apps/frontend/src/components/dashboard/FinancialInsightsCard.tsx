@@ -35,7 +35,7 @@ export function FinancialInsightsCard({ className }: FinancialInsightsCardProps)
     loadInsights();
   }, [token]);
 
-  if (isLoading) {
+  if (isLoading && insights.length === 0) {
     return (
       <div className={`bg-surface-container-low p-8 rounded-xl animate-pulse ${className}`}>
         <div className="flex items-center gap-3 mb-6">
