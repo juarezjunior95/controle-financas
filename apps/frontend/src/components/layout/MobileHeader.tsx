@@ -16,7 +16,7 @@ export function MobileHeader() {
   return (
     <header className="md:hidden bg-[#131313] fixed top-0 w-full z-40 border-none bg-gradient-to-b from-[#1c1b1b] to-transparent">
       <div className="flex justify-between items-center w-full px-6 py-4">
-        <h1 className="text-xl font-black text-[#e5e2e1] tracking-tighter">Vault</h1>
+        <h1 className="text-xl font-black text-[#e5e2e1] tracking-tighter">Finança Pró</h1>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => logout()}

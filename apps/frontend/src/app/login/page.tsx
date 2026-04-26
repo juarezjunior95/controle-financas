@@ -23,7 +23,7 @@ export default function LoginPage() {
         {/* Branding & Editorial Section */}
         <div className="hidden lg:flex flex-col space-y-8 pr-12">
           <div>
-            <span className="text-xl font-black text-on-surface tracking-tighter font-headline">Vault</span>
+            <span className="text-xl font-black text-on-surface tracking-tighter font-headline">Finança Pró</span>
             <h1 className="text-5xl font-bold font-headline leading-tight mt-6 tracking-tight">
               Sua liberdade <br />
               <span className="text-primary">financeira</span> começa <br />

@@ -119,7 +119,8 @@ describe('[ACCEPTANCE] Fluxo Ponta-a-Ponta: Transações -> Dashboard', () => {
       .mockResolvedValueOnce([
         { type: 'income', _sum: { amount: '500.00' } },
         { type: 'expense', _sum: { amount: '150.00' } },
-      ]);
+      ])
+      .mockResolvedValueOnce([]); // Terceira chamada: mês anterior
 
     // 2. Faz requisição HTTP simulada
     const response = await request(app).get('/api/v1/dashboard/summary');
@@ -140,7 +141,8 @@ describe('[ACCEPTANCE] Fluxo Ponta-a-Ponta: Transações -> Dashboard', () => {
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         { type: 'income', _sum: { amount: '300.00' } },
-      ]);
+      ])
+      .mockResolvedValueOnce([]); // Terceira chamada: mês anterior
 
     const response = await request(app).get('/api/v1/dashboard/summary?month=4&year=2026');
 

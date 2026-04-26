@@ -229,7 +229,7 @@ export default function TransactionsPage() {
 
       <header className="flex items-center justify-between w-full">
         <div className="flex flex-col">
-          <span className="text-xl font-black text-[#e5e2e1] tracking-tighter md:hidden">VAULT</span>
+          <span className="text-xl font-black text-[#e5e2e1] tracking-tighter md:hidden">FINANÇA PRÓ</span>
           <h2 className="text-2xl font-bold font-headline tracking-tight text-on-surface">
             Transações
           </h2>

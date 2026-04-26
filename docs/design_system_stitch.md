@@ -1,8 +1,8 @@
-# Midnight Vault Design System
+# Finança Pró Design System
 
 ### 1. Overview & Creative North Star
 **Creative North Star: The Sovereign Ledger**
-Midnight Vault is a high-end financial design system that rejects the cluttered, "spreadsheet-style" density of traditional fintech. It embraces a "Sovereign Ledger" aesthetic—combining the weight of institutional finance with the fluidity of a modern luxury interface. The system prioritizes breathing room, deep tonal contrast, and editorial typographic scales to create an environment that feels secure yet effortless.
+Finança Pró is a high-end financial design system that rejects the cluttered, "spreadsheet-style" density of traditional fintech. It embraces a "Sovereign Ledger" aesthetic—combining the weight of institutional finance with the fluidity of a modern luxury interface. The system prioritizes breathing room, deep tonal contrast, and editorial typographic scales to create an environment that feels secure yet effortless.
 
 Asymmetry is used intentionally in sidebar navigation and card layouts to break the rigid grid, guiding the eye toward "Primary Anchors" (like current balance) while letting secondary data (budgets and goals) sit in a supportive, layered hierarchy.
 

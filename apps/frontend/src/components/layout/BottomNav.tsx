@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const BOTTOM_MENU_ITEMS = [
-  { href: "/dashboard", icon: "home", label: "Home" },
-  { href: "/transactions", icon: "list_alt", label: "Activity" },
-  { href: "/new-transaction", icon: "add_circle", label: "Add" },
-  { href: "/goals", icon: "stars", label: "Goals" },
-  { href: "/categories", icon: "pie_chart", label: "Budgets" },
+  { href: "/dashboard", icon: "home", label: "Início" },
+  { href: "/transactions", icon: "list_alt", label: "Transações" },
+  { href: "/new-transaction", icon: "add_circle", label: "Novo" },
+  { href: "/goals", icon: "stars", label: "Metas" },
+  { href: "/categories", icon: "pie_chart", label: "Categorias" },
 ];
 
 export function BottomNav() {

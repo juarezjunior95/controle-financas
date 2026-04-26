@@ -141,7 +141,7 @@ export default function NewTransactionPage() {
             }}
           ></div>
           <div className="relative z-10">
-            <span className="text-xs font-bold tracking-[0.2em] text-on-primary-container uppercase opacity-80">Vault Premium</span>
+            <span className="text-xs font-bold tracking-[0.2em] text-on-primary-container uppercase opacity-80">Finança Pró Premium</span>
             <h1 className="font-headline text-3xl font-black text-on-primary-container mt-4 leading-tight tracking-tighter">Novo Lançamento</h1>
             <p className="text-on-primary-container/70 mt-4 text-sm font-medium">Organize seu fluxo financeiro com precisão cirúrgica em nosso cofre digital.</p>
           </div>

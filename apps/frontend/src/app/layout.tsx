@@ -10,7 +10,7 @@ const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
 const sourceSans = Source_Sans_3({ subsets: ["latin"], variable: "--font-source-sans" });
 
 export const metadata: Metadata = {
-  title: "Controle de Finanças - Vault",
+  title: "Finança Pró",
   description: "Sistema de controle de finanças pessoais e metas financeiras.",
 };
 

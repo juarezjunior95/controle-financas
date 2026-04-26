@@ -121,19 +121,30 @@ export default function DashboardPage() {
 
   const totalExpenseMonth = Object.values(expensesByCategory).reduce((a, b) => a + b, 0);
 
-  const categoryData: CategoryStat[] = Object.entries(expensesByCategory)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 4)
-    .map(([name, amount], index) => {
-      // Tenta encontrar a cor real da categoria nas transações
-      const tx = transactions.find(t => t.category.name === name);
-      return {
-        name,
-        amount,
-        percentage: totalExpenseMonth > 0 ? (amount / totalExpenseMonth) * 100 : 0,
-        color: tx?.category.color || getCategoryColor(index),
-      };
+  const sortedCategories = Object.entries(expensesByCategory).sort((a, b) => b[1] - a[1]);
+  const top4Categories = sortedCategories.slice(0, 4);
+  const othersCategories = sortedCategories.slice(4);
+  const othersAmount = othersCategories.reduce((acc, curr) => acc + curr[1], 0);
+
+  const categoryData: CategoryStat[] = top4Categories.map(([name, amount], index) => {
+    // Tenta encontrar a cor real da categoria nas transações
+    const tx = transactions.find((t) => t.category.name === name);
+    return {
+      name,
+      amount,
+      percentage: totalExpenseMonth > 0 ? (amount / totalExpenseMonth) * 100 : 0,
+      color: tx?.category.color || getCategoryColor(index),
+    };
+  });
+
+  if (othersAmount > 0) {
+    categoryData.push({
+      name: "Outros",
+      amount: othersAmount,
+      percentage: totalExpenseMonth > 0 ? (othersAmount / totalExpenseMonth) * 100 : 0,
+      color: "#424654",
     });
+  }
 
   // ─── Handlers ────────────────────────────────────────────────────────────
 

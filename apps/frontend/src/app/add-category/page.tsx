@@ -78,27 +78,6 @@ export default function AddCategoryPage() {
               <h2 className="text-xl font-bold tracking-tighter text-[#e5e2e1] font-headline">Nova Categoria</h2>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center bg-surface-container px-4 py-2 rounded-full text-on-surface/60 focus-within:text-primary transition-colors border border-outline-variant/10">
-              <span className="material-symbols-outlined text-xl">search</span>
-              <input
-                className="bg-transparent border-none focus:ring-0 text-sm w-48 font-body ml-2"
-                placeholder="Search data..."
-                type="text"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="text-on-surface/60 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined">notifications</span>
-              </button>
-              <button className="text-on-surface/60 hover:text-primary transition-colors">
-                <span className="material-symbols-outlined">settings</span>
-              </button>
-              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/20 bg-surface-container flex items-center justify-center">
-                <span className="material-symbols-outlined">person</span>
-              </div>
-            </div>
-          </div>
         </div>
       </header>
 
@@ -149,7 +128,7 @@ export default function AddCategoryPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Acento Cromático</label>
+                  <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Cor de Destaque</label>
                   <div className="flex flex-wrap gap-4 p-4 bg-surface-container-low rounded-xl border border-outline-variant/10">
                     {colors.map((color) => (
                       <button
@@ -176,7 +155,7 @@ export default function AddCategoryPage() {
               <section className="space-y-6">
                 <div className="space-y-4">
                   <label className="text-[10px] uppercase tracking-[0.15em] font-bold text-primary opacity-90">Fluxo de Caixa</label>
-                  <div className="grid grid-cols-5 gap-3">
+                  <div className="flex flex-col gap-3">
                     <label
                       className={`flex items-center justify-between p-4 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container transition-all border ${selectedFlow === 'expense' ? 'border-primary/30 ring-1 ring-primary/30' : 'border-outline-variant/10'
                         }`}
