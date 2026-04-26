@@ -20,7 +20,8 @@ export default function NewTransactionPage() {
 
   // Estados do formulário
   const [type, setType] = useState<"expense" | "income">("expense");
-  const [amount, setAmount] = useState("");
+  const [amountRaw, setAmountRaw] = useState<number>(0);
+  const [amountDisplay, setAmountDisplay] = useState("");
   const getLocalDate = () => {
     const now = new Date();
     const year = now.getFullYear();
