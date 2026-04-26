@@ -127,7 +127,7 @@ export default function GoalsPage() {
 
       {/* Main Content Area */}
       <div className="w-full">
-        {isLoading ? (
+        {isLoading && goals.length === 0 ? (
           <GoalsLoading />
         ) : error ? (
           <GoalsError message={error} onRetry={loadGoals} />

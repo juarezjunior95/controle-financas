@@ -24,6 +24,8 @@ interface DashboardSummary {
 interface Category {
   id: string;
   name: string;
+  icon?: string;
+  color?: string;
 }
 
 interface Transaction {
@@ -44,8 +46,8 @@ interface CategoryStat {
 
 // ─── Color palette para categorias (sem ícone da API ainda) ──────────────────
 const CATEGORY_COLORS = [
-  "#b0c6ff", "#ffb59b", "#a1b4eb", "#b388ff",
-  "#69f0ae", "#ffd740", "#ff8a80", "#82b1ff",
+  "#b0c6ff", "#ffb59b", "#82f9d8", "#f8b0ff", "#ffe082",
+  "#ff8a80", "#b39ddb", "#4dd0e1", "#81c784", "#ffb74d"
 ];
 
 function getCategoryColor(index: number): string {
@@ -122,12 +124,16 @@ export default function DashboardPage() {
   const categoryData: CategoryStat[] = Object.entries(expensesByCategory)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4)
-    .map(([name, amount], index) => ({
-      name,
-      amount,
-      percentage: totalExpenseMonth > 0 ? (amount / totalExpenseMonth) * 100 : 0,
-      color: getCategoryColor(index),
-    }));
+    .map(([name, amount], index) => {
+      // Tenta encontrar a cor real da categoria nas transações
+      const tx = transactions.find(t => t.category.name === name);
+      return {
+        name,
+        amount,
+        percentage: totalExpenseMonth > 0 ? (amount / totalExpenseMonth) * 100 : 0,
+        color: tx?.category.color || getCategoryColor(index),
+      };
+    });
 
   // ─── Handlers ────────────────────────────────────────────────────────────
 
@@ -170,7 +176,8 @@ export default function DashboardPage() {
 
   // ─── Loading ──────────────────────────────────────────────────────────────
 
-  if (isLoading) {
+  // Só mostra loading de tela inteira na primeira carga
+  if (isLoading && !summary) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <span className="material-symbols-outlined animate-spin text-4xl text-primary">
@@ -438,14 +445,14 @@ export default function DashboardPage() {
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      txn.type === "income"
-                        ? "bg-green-500/20 text-green-400"
-                        : "bg-red-500/20 text-red-400"
-                    }`}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center`}
+                    style={{
+                      backgroundColor: txn.category.color ? `${txn.category.color}33` : (txn.type === "income" ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.2)"),
+                      color: txn.category.color || (txn.type === "income" ? "#4ade80" : "#f87171")
+                    }}
                   >
                     <span className="material-symbols-outlined text-sm">
-                      {txn.type === "income" ? "payments" : "shopping_bag"}
+                      {txn.category.icon || (txn.type === "income" ? "payments" : "shopping_bag")}
                     </span>
                   </div>
                   <div>

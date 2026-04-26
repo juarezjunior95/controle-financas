@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { fetchAPI } from "@/lib/api";
 import { TransactionModal } from "@/components/dashboard/QuickTransactionModal";
+import { DeleteTransactionModal } from "@/components/transactions/DeleteTransactionModal";
 
 interface Transaction {
   id: string;
@@ -15,6 +16,8 @@ interface Transaction {
   occurredOn: string;
   category: {
     name: string;
+    icon?: string;
+    color?: string;
   };
 }
 
@@ -29,6 +32,7 @@ export default function TransactionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
 
   const now = new Date();
@@ -79,8 +83,9 @@ export default function TransactionsPage() {
     loadTransactions();
   }, [loadTransactions]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Deseja realmente excluir esta transação?")) return;
+  const handleDelete = async () => {
+    if (!transactionToDelete) return;
+    const id = transactionToDelete.id;
 
     setDeletingId(id);
     const { error: apiError } = await fetchAPI(`/transactions/${id}`, {
@@ -96,6 +101,7 @@ export default function TransactionsPage() {
       showToast("Transação excluída com sucesso.", "success");
       // Invalida cache do Next.js para que o dashboard recarregue ao voltar
       router.refresh();
+      setTransactionToDelete(null);
     }
   };
 
@@ -307,7 +313,7 @@ export default function TransactionsPage() {
           </div>
         )}
 
-        {loading ? (
+        {loading && transactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
             <p className="text-on-surface-variant animate-pulse">Carregando dados...</p>
@@ -348,14 +354,14 @@ export default function TransactionsPage() {
                     >
                       <div className="flex items-center gap-4">
                         <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            tx.type === "income"
-                              ? "bg-primary/10 text-primary"
-                              : "bg-on-surface/5 text-on-surface"
-                          }`}
+                          className="w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                          style={{ 
+                            backgroundColor: `${tx.category.color || (tx.type === 'income' ? '#82f9d8' : '#ffb59b')}20`,
+                            color: tx.category.color || (tx.type === 'income' ? '#82f9d8' : '#ffb59b')
+                          }}
                         >
                           <span className="material-symbols-outlined">
-                            {tx.type === "income" ? "payments" : "shopping_cart"}
+                            {tx.category.icon || (tx.type === 'income' ? 'payments' : 'shopping_cart')}
                           </span>
                         </div>
                         <div>
@@ -381,7 +387,7 @@ export default function TransactionsPage() {
                             <span className="material-symbols-outlined text-sm">edit</span>
                           </button>
                           <button
-                            onClick={() => handleDelete(tx.id)}
+                            onClick={() => setTransactionToDelete(tx)}
                             disabled={deletingId === tx.id}
                             className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center hover:text-error transition-colors disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-error outline-none"
                             title="Excluir"
@@ -415,6 +421,18 @@ export default function TransactionsPage() {
           }}
         />
       )}
+
+      <DeleteTransactionModal
+        isOpen={!!transactionToDelete}
+        onClose={() => setTransactionToDelete(null)}
+        onConfirm={handleDelete}
+        isLoading={!!deletingId}
+        transactionData={transactionToDelete ? {
+          description: transactionToDelete.description,
+          amount: transactionToDelete.amount,
+          type: transactionToDelete.type
+        } : undefined}
+      />
     </div>
   );
 }

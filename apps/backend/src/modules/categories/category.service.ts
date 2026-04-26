@@ -33,7 +33,6 @@ export class CategoryService {
    */
   static async seedDefaultCategories(userId: string) {
     try {
-      // Busca os nomes das categorias que o usuário já possui
       const existing = await prisma.category.findMany({
         where: { userId },
         select: { name: true },
@@ -41,38 +40,66 @@ export class CategoryService {
 
       const existingNames = new Set(existing.map((c) => c.name));
 
-      // Filtra apenas as que estão faltando
       const missing = this.DEFAULT_CATEGORIES.filter(
         (name) => !existingNames.has(name)
       );
 
       if (missing.length === 0) {
-        console.log(`[CategoryService] Todas as categorias padrão já existem para o usuário ${userId}`);
         return;
       }
 
-      const data = missing.map((name) => ({
-        name,
-        userId,
-        isSystem: true,
-      }));
+      const getDefaults = (name: string) => {
+        const n = name.toLowerCase();
+        if (n.includes('alimentação')) return { icon: 'restaurant', color: '#ffb59b' };
+        if (n.includes('moradia')) return { icon: 'home', color: '#ffe082' };
+        if (n.includes('transporte')) return { icon: 'directions_car', color: '#82f9d8' };
+        if (n.includes('lazer')) return { icon: 'sports_esports', color: '#f8b0ff' };
+        if (n.includes('saúde')) return { icon: 'medical_services', color: '#ff8a80' };
+        if (n.includes('educação')) return { icon: 'school', color: '#b39ddb' };
+        if (n.includes('salário')) return { icon: 'payments', color: '#82f9d8' };
+        if (n.includes('investimentos')) return { icon: 'show_chart', color: '#b0c6ff' };
+        return { icon: 'label', color: '#b0c6ff' };
+      };
+
+      const data = missing.map((name) => {
+        const defaults = getDefaults(name);
+        return {
+          name,
+          userId,
+          isSystem: true,
+          icon: defaults.icon,
+          color: defaults.color,
+        };
+      });
 
       await prisma.category.createMany({
         data,
         skipDuplicates: true,
       });
 
-      // Marca como isSystem as que já existiam com nome igual mas sem a flag
-      await prisma.category.updateMany({
-        where: {
-          userId,
-          name: { in: this.DEFAULT_CATEGORIES },
-          isSystem: false,
-        },
-        data: { isSystem: true },
-      });
+      // Atualiza ícone e cor de categorias do sistema que já existem mas estão sem esses dados
+      for (const name of this.DEFAULT_CATEGORIES) {
+        const defaults = getDefaults(name);
+        await prisma.category.updateMany({
+          where: {
+            userId,
+            name,
+            OR: [
+              { icon: 'label' },
+              { icon: null },
+              { color: '#b0c6ff' },
+              { color: null }
+            ]
+          },
+          data: {
+            icon: defaults.icon,
+            color: defaults.color,
+            isSystem: true
+          }
+        });
+      }
 
-      console.log(`[CategoryService] Categorias padrão sincronizadas para o usuário ${userId} (inseridas: ${missing.join(', ')})`);
+      console.log(`[CategoryService] Categorias padrão sincronizadas para o usuário ${userId}`);
     } catch (error) {
       console.error('[CategoryService] Erro ao criar categorias padrão:', error);
     }

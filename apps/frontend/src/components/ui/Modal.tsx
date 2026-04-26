@@ -7,9 +7,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  maxWidth?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, maxWidth }: ModalProps) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -32,7 +33,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
       />
 
       {/* Modal */}
-      <div className="relative bg-surface-container-low rounded-2xl shadow-2xl w-full max-w-md border border-outline-variant/10 animate-in fade-in zoom-in-95 duration-200">
+      <div className={`relative bg-surface-container-low rounded-2xl shadow-2xl w-full ${maxWidth || "max-w-md"} border border-outline-variant/10 animate-in fade-in zoom-in-95 duration-200`}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-outline-variant/10">
           <h3 className="text-xl font-bold font-headline text-on-surface">
@@ -49,7 +50,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         </div>
 
         {/* Content */}
-        <div className="p-6">{children}</div>
+        <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">{children}</div>
       </div>
     </div>
   );

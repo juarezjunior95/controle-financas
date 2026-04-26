@@ -30,6 +30,20 @@ body {
   .animate-in {
     animation: fadeSlideIn 0.25s ease-out;
   }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(176, 198, 255, 0.2);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(176, 198, 255, 0.4);
+  }
 }
 
 @keyframes fadeSlideIn {
