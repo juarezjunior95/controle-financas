@@ -159,6 +159,21 @@ export class ClientService {
   }
 
   /**
+   * Atualiza a chave de API do Gemini do usuário.
+   */
+  static async updateGeminiApiKey(clerkId: string, geminiApiKey: string | null): Promise<string | null> {
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (!user) throw new Error('Usuário não encontrado.');
+
+    const updated = await prisma.user.update({
+      where: { clerkId },
+      data: { geminiApiKey },
+    });
+
+    return updated.geminiApiKey;
+  }
+
+  /**
    * Sincroniza um usuário com base nos dados retornados pelo Clerk.
    * Busca o user completo no Clerk e faz upsert local.
    */

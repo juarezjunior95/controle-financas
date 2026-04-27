@@ -169,4 +169,35 @@ export class ClientController {
       });
     }
   }
+
+  /**
+   * PUT /api/v1/users/ai-config
+   * Atualiza a configuração de IA do usuário (Gemini API Key).
+   */
+  static async updateAiConfig(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = (req as AuthenticatedRequest).auth?.userId;
+      if (!userId) {
+        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Usuário não autenticado.' } });
+        return;
+      }
+
+      const { geminiApiKey } = req.body;
+
+      // Pode ser null (para resetar/remover) ou uma string
+      const updated = await ClientService.updateGeminiApiKey(userId, geminiApiKey || null);
+
+      res.json({
+        data: { geminiApiKey: updated },
+        message: 'Configuração de IA atualizada com sucesso.',
+      });
+    } catch (error: any) {
+      console.error('[ClientController] Erro ao atualizar config de IA:', error);
+      if (error.message === 'Usuário não encontrado.') {
+        res.status(404).json({ error: { code: 'NOT_FOUND', message: error.message } });
+        return;
+      }
+      res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Erro interno ao atualizar configuração de IA.' } });
+    }
+  }
 }

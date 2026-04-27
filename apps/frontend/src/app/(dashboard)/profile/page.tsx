@@ -33,6 +33,13 @@ export default function ProfilePage() {
   const [avatarStatus, setAvatarStatus] = useState<FormStatus>("idle");
   const [avatarMsg, setAvatarMsg] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  // ── Gemini API Key State ───────────────────────────────────────────
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [originalApiKey, setOriginalApiKey] = useState("");
+  const [aiStatus, setAiStatus] = useState<FormStatus>("idle");
+  const [aiErrorMsg, setAiErrorMsg] = useState("");
+  const [aiSuccessMsg, setAiSuccessMsg] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,8 +65,20 @@ export default function ProfilePage() {
         setInitialBalance(val);
         setOriginalBalance(val);
         setBalanceInput(formatNumber(val));
+      }
+    });
+
+    // Load full profile (to get geminiApiKey)
+    fetchAPI<{ geminiApiKey: string | null }>("/clients/me", {
+      method: "GET",
+      token,
+    }).then(({ data, error }) => {
+      if (data) {
+        const key = data.geminiApiKey ?? "";
+        setGeminiApiKey(key);
+        setOriginalApiKey(key);
       } else if (error) {
-        console.error("[Profile] Erro ao carregar saldo inicial:", error.message);
+        console.error("[Profile] Erro ao carregar perfil completo:", error.message);
       }
     });
   }, [token]);
@@ -88,6 +107,10 @@ export default function ProfilePage() {
   const balanceValidationError = getBalanceValidationError(parsedBalance, balanceInput);
   const canSaveBalance =
     balanceChanged && !balanceValidationError && balanceStatus !== "loading";
+
+  // ── AI Derived State ───────────────────────────────────────────────
+  const aiKeyChanged = geminiApiKey !== originalApiKey;
+  const canSaveAi = aiKeyChanged && aiStatus !== "loading";
 
   function getValidationError(name: string): string | null {
     if (!name) return "O nome não pode estar vazio.";
@@ -161,7 +184,7 @@ export default function ProfilePage() {
     setBalanceSuccessMsg("");
 
     const { data, error } = await fetchAPI<{ initialBalance: number }>(
-      "/users/initial-balance",
+      "/clients/me",
       {
         method: "PUT",
         token,
@@ -171,15 +194,12 @@ export default function ProfilePage() {
 
     if (error) {
       setBalanceStatus("error");
-      setBalanceErrorMsg(error.message || "Falha ao atualizar o saldo inicial.");
+      setBalanceErrorMsg(error.message || "Falha ao atualizar o saldo.");
       return;
     }
 
     if (data) {
-      const saved = data.initialBalance;
-      setInitialBalance(saved);
-      setOriginalBalance(saved);
-      setBalanceInput(formatNumber(saved));
+      setOriginalBalance(data.initialBalance);
       setBalanceStatus("success");
       setBalanceSuccessMsg("Saldo inicial atualizado com sucesso!");
       setTimeout(() => {
@@ -195,6 +215,49 @@ export default function ProfilePage() {
     setBalanceErrorMsg("");
     setBalanceSuccessMsg("");
   }, [originalBalance]);
+
+  // ── Save Gemini API Key ────────────────────────────────────────────
+  const handleSaveAiConfig = useCallback(async () => {
+    if (!canSaveAi || !token) return;
+
+    setAiStatus("loading");
+    setAiErrorMsg("");
+    setAiSuccessMsg("");
+
+    const { data, error } = await fetchAPI<{ geminiApiKey: string | null }>(
+      "/users/ai-config",
+      {
+        method: "PUT",
+        token,
+        body: JSON.stringify({ geminiApiKey: geminiApiKey.trim() || null }),
+      }
+    );
+
+    if (error) {
+      setAiStatus("error");
+      setAiErrorMsg(error.message || "Falha ao atualizar a chave de IA.");
+      return;
+    }
+
+    if (data) {
+      const saved = data.geminiApiKey ?? "";
+      setGeminiApiKey(saved);
+      setOriginalApiKey(saved);
+      setAiStatus("success");
+      setAiSuccessMsg("Configuração de IA atualizada com sucesso!");
+      setTimeout(() => {
+        setAiStatus("idle");
+        setAiSuccessMsg("");
+      }, 3000);
+    }
+  }, [canSaveAi, token, geminiApiKey]);
+
+  const handleCancelAi = useCallback(() => {
+    setGeminiApiKey(originalApiKey);
+    setAiStatus("idle");
+    setAiErrorMsg("");
+    setAiSuccessMsg("");
+  }, [originalApiKey]);
 
   // ── Avatar Upload ──────────────────────────────────────────────────
   const handleAvatarClick = () => {
@@ -695,6 +758,107 @@ export default function ProfilePage() {
               Cancelar
             </button>
           )}
+        </div>
+      </div>
+
+      {/* IA Config Card */}
+      <div className="mt-6 bg-[#1c1b1b] rounded-2xl border border-[#424654]/20 p-8">
+        <h3 className="text-[#e5e2e1] font-dm-sans font-bold mb-4 flex items-center gap-2">
+          <span className="material-symbols-outlined text-[#b0c6ff]">psychology</span>
+          Inteligência Artificial
+        </h3>
+
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="gemini-api-key-input"
+              className="block text-[#c3c6d6] text-xs font-source-sans-3 uppercase tracking-widest mb-2"
+            >
+              Gemini API Key
+            </label>
+            <p className="text-[#c3c6d6]/60 text-xs font-source-sans-3 mb-3">
+              Configure sua própria chave do Google Gemini para ter insights personalizados. 
+              Sua chave é armazenada de forma segura e usada apenas para suas análises.
+              <a 
+                href="https://aistudio.google.com/app/apikey" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-[#b0c6ff] hover:underline ml-1 inline-flex items-center gap-0.5"
+              >
+                Obter chave gratuita <span className="material-symbols-outlined text-[10px]">open_in_new</span>
+              </a>
+            </p>
+
+            <div className="relative">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#c3c6d6]/50 text-lg">
+                key
+              </span>
+              <input
+                id="gemini-api-key-input"
+                type="password"
+                value={geminiApiKey}
+                onChange={(e) => {
+                  setGeminiApiKey(e.target.value);
+                  if (aiStatus === "error" || aiStatus === "success") {
+                    setAiStatus("idle");
+                    setAiErrorMsg("");
+                    setAiSuccessMsg("");
+                  }
+                }}
+                placeholder="Cole sua chave aqui (AIza...)"
+                className="w-full bg-[#131313] text-[#e5e2e1] pl-11 pr-4 py-3.5 rounded-xl border border-[#424654]/30 focus:border-[#b0c6ff]/50 focus:ring-1 focus:ring-[#b0c6ff]/20 transition-all duration-200 outline-none font-source-sans-3 text-sm placeholder:text-[#c3c6d6]/30"
+              />
+            </div>
+          </div>
+
+          {/* Feedback Messages */}
+          {aiStatus === "success" && aiSuccessMsg && (
+            <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-xl text-sm font-source-sans-3 animate-in">
+              <span className="material-symbols-outlined text-lg">check_circle</span>
+              {aiSuccessMsg}
+            </div>
+          )}
+
+          {aiStatus === "error" && aiErrorMsg && (
+            <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-source-sans-3 animate-in">
+              <span className="material-symbols-outlined text-lg">cancel</span>
+              {aiErrorMsg}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 pt-2">
+            <button
+              onClick={handleSaveAiConfig}
+              disabled={!canSaveAi}
+              className={`px-6 py-3 rounded-full text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                canSaveAi
+                  ? "bg-gradient-to-br from-[#b0c6ff] to-[#0058cb] text-[#001945] hover:opacity-90 active:scale-95 shadow-lg shadow-[#0058cb]/20"
+                  : "bg-[#353534] text-[#c3c6d6]/40 cursor-not-allowed"
+              }`}
+            >
+              {aiStatus === "loading" ? (
+                <>
+                  <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-lg">save</span>
+                  Salvar chave
+                </>
+              )}
+            </button>
+
+            {aiKeyChanged && aiStatus !== "loading" && (
+              <button
+                onClick={handleCancelAi}
+                className="px-6 py-3 rounded-full text-sm font-bold text-[#c3c6d6] hover:text-[#e5e2e1] hover:bg-[#353534] transition-all duration-200"
+              >
+                Cancelar
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

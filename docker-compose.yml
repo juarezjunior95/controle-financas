@@ -16,6 +16,7 @@ services:
       - CLERK_PUBLISHABLE_KEY=${CLERK_PUBLISHABLE_KEY}
       - FRONTEND_URL=${FRONTEND_URL}
       - JWT_SECRET=${JWT_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - NODE_ENV=production
 
   frontend:

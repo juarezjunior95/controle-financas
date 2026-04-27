@@ -25,6 +25,7 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/backend/package.json ./apps/backend/
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/apps/backend/openapi.yaml ./apps/backend/
 
 EXPOSE 3333
 

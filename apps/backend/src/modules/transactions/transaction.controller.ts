@@ -58,7 +58,7 @@ export class TransactionController {
         message: 'Transação criada com sucesso.',
       });
     } catch (error: any) {
-      console.error('[TransactionController] Erro no create:', error);
+      (req as any).log.error({ err: error }, '[TransactionController] Erro no create');
       res.status(500).json({
         error: {
           code: 'INTERNAL_SERVER_ERROR',
@@ -92,6 +92,7 @@ export class TransactionController {
 
       res.status(200).json({ data: transactions });
     } catch (error: any) {
+      (req as any).log.error({ err: error }, '[TransactionController] Erro no list');
       res.status(500).json({ error: error.message });
     }
   }
@@ -100,9 +101,9 @@ export class TransactionController {
    * Endpoint: PUT /api/v1/transactions/:id
    */
   static async update(req: Request, res: Response) {
+    const { id } = req.params;
     try {
       const userId = (req as AuthenticatedRequest).auth?.userId;
-      const { id } = req.params;
 
       if (!userId) {
         res.status(401).json({ error: 'Não autorizado' });
@@ -112,6 +113,7 @@ export class TransactionController {
       const transaction = await TransactionService.update(userId, id, req.body);
       res.status(200).json({ data: transaction, message: 'Transação atualizada.' });
     } catch (error: any) {
+      (req as any).log.error({ err: error, transactionId: id }, '[TransactionController] Erro no update');
       res.status(500).json({ error: error.message });
     }
   }
@@ -120,9 +122,9 @@ export class TransactionController {
    * Endpoint: DELETE /api/v1/transactions/:id
    */
   static async delete(req: Request, res: Response) {
+    const { id } = req.params;
     try {
       const userId = (req as AuthenticatedRequest).auth?.userId;
-      const { id } = req.params;
 
       if (!userId) {
         res.status(401).json({ error: 'Não autorizado' });
@@ -132,6 +134,7 @@ export class TransactionController {
       await TransactionService.delete(userId, id);
       res.status(200).json({ message: 'Transação excluída com sucesso.' });
     } catch (error: any) {
+      (req as any).log.error({ err: error, transactionId: id }, '[TransactionController] Erro no delete');
       res.status(500).json({ error: error.message });
     }
   }
