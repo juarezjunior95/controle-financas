@@ -91,7 +91,11 @@ export function Sidebar() {
 
           <Link
             href="/help"
-            className="text-[#c3c6d6] py-2 flex items-center space-x-3 hover:text-[#e5e2e1] transition-colors"
+            className={`py-2 flex items-center space-x-3 transition-colors ${
+              pathname === "/help"
+                ? "text-[#b0c6ff]"
+                : "text-[#c3c6d6] hover:text-[#e5e2e1]"
+            }`}
           >
             <span className="material-symbols-outlined">help</span>
             <span className="font-source-sans-3 text-sm">Ajuda</span>

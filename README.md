@@ -99,10 +99,13 @@ yarn install
 ```
 
 3. Configure as variáveis de ambiente:
-Copie o arquivo base e popule com as credenciais do seu banco de dados e de ambiente:
+Copie o arquivo base e popule com as credenciais necessárias:
 ```bash
-cp .env.example .env.local
+cp .env-example .env
 ```
+
+> [!TIP]
+> **AI Insights (Gemini):** Para habilitar o card de insights financeiros automáticos, você precisará de uma chave de API do Gemini 2.5 Flash. Você pode criar uma gratuitamente no [Google AI Studio](https://aistudio.google.com/app/apikey). Adicione-a na variável `GEMINI_API_KEY`.
 
 4. Execute a aplicação (modo de desenvolvimento local):
 ```bash

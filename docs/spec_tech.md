@@ -44,6 +44,7 @@ Este documento orienta desenvolvimento e operações do produto de **finanças p
 ### Integrações
 
 - **Persistência:** PostgreSQL gerenciado ou container
+- **IA (Insights):** Google Gemini 2.5 Flash (via `@google/genai`)
 - **Deployment:** conforme provedor escolhido
 - **Segurança:** bcrypt/argon2 para senha; JWT assinado ou sessão segura
 - **Observabilidade:** logs no stdout; agregador conforme provedor

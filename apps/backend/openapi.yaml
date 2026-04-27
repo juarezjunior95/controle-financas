@@ -1,0 +1,74 @@
+openapi: 3.0.0
+info:
+  title: Controle de Finanças API
+  description: API para controle de finanças pessoais com IA integrada.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: API v1
+paths:
+  /auth/me:
+    get:
+      summary: Retorna o usuário autenticado
+      tags: [Auth]
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Não autorizado
+  /dashboard/summary:
+    get:
+      summary: Retorna o resumo financeiro do dashboard
+      tags: [Dashboard]
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: integer
+        - name: year
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+  /transactions:
+    get:
+      summary: Lista transações do usuário
+      tags: [Transactions]
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Cria uma nova transação
+      tags: [Transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [type, amount, date, category]
+              properties:
+                type:
+                  type: string
+                  enum: [income, expense]
+                amount:
+                  type: number
+                description:
+                  type: string
+                date:
+                  type: string
+                  format: date
+                category:
+                  type: string
+      responses:
+        '201':
+          description: Criado
+  /categories:
+    get:
+      summary: Lista categorias do usuário
+      tags: [Categories]
+      responses:
+        '200':
+          description: OK

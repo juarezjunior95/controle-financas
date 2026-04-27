@@ -13,6 +13,7 @@ model User {
   displayName    String?  @map("display_name")
   avatarUrl      String?  @map("avatar_url")
   initialBalance Decimal  @default(0) @map("initial_balance") @db.Decimal(15, 2)
+  geminiApiKey   String?  @map("gemini_api_key")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

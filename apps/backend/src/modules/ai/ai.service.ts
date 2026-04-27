@@ -6,20 +6,21 @@ export class AiService {
    * Gera insights financeiros com base nas transações dos últimos 30 dias usando o Gemini.
    */
   static async getFinancialInsights(clerkId: string) {
-    // 1. Validar a chave de API
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn('[AiService] GEMINI_API_KEY não configurada. Usando mock.');
-      return this.getMockInsights();
-    }
-
-    // 2. Buscar o usuário
+    // 1. Buscar o usuário
     const user = await prisma.user.findUnique({
       where: { clerkId },
     });
 
     if (!user) {
       throw new Error('Usuário não encontrado');
+    }
+
+    // 2. Validar a chave de API (Prioridade: Usuário > Env)
+    const apiKey = (user as any).geminiApiKey || process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      console.warn('[AiService] Nenhuma GEMINI_API_KEY encontrada. Usando mock.');
+      return this.getMockInsights();
     }
 
     // 3. Buscar transações dos últimos 30 dias
@@ -75,7 +76,7 @@ export class AiService {
     // 5. Chamar o modelo
     try {
       const ai = new GoogleGenAI({ apiKey });
-      
+
       const prompt = `
         Atue como um consultor financeiro pessoal experiente e objetivo.
         Abaixo estão os dados financeiros do usuário referentes aos últimos 30 dias.
@@ -96,7 +97,7 @@ export class AiService {
       `;
 
       const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash-lite',
         contents: prompt,
         config: {
           temperature: 0.2,
@@ -106,16 +107,18 @@ export class AiService {
 
       const responseText = response.text || '[]';
       try {
-        const insights = JSON.parse(responseText.trim());
+        // Limpar possíveis blocos de código markdown (```json ... ```)
+        const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const insights = JSON.parse(cleanJson);
         if (Array.isArray(insights)) {
           return insights.slice(0, 3);
         }
       } catch (parseError) {
         console.error('[AiService] Erro ao fazer parse do JSON retornado pelo Gemini:', responseText);
       }
-      
+
       return this.getFallbackInsights(summary.totalIncome, summary.totalExpense);
-      
+
     } catch (error) {
       console.error('[AiService] Erro ao chamar Google Gen AI:', error);
       return this.getFallbackInsights(summary.totalIncome, summary.totalExpense);
@@ -124,9 +127,9 @@ export class AiService {
 
   private static getMockInsights() {
     return [
-      "A API do Gemini não está configurada no ambiente atual.",
-      "Para obter insights reais, configure a variável GEMINI_API_KEY no arquivo .env.",
-      "Isso demonstra o funcionamento básico do card de insights."
+      "Os insights inteligentes estão em modo de demonstração.",
+      "Para ativar a análise real baseada em IA, configure a chave do Gemini.",
+      "Isso permitirá recomendações personalizadas com base no seu histórico financeiro."
     ];
   }
 

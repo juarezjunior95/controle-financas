@@ -3,8 +3,19 @@ import express from 'express';
 import cors from 'cors';
 import { logger } from './config/logger';
 import { httpLogger } from './middleware/logger.middleware';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
+import path from 'path';
 
 const app = express();
+
+// Carregar documentação Swagger de forma resiliente
+let swaggerDocument: any = null;
+try {
+  swaggerDocument = YAML.load(path.join(__dirname, '../openapi.yaml'));
+} catch (err) {
+  logger.warn('Não foi possível carregar openapi.yaml. Documentação Swagger desabilitada.');
+}
 
 // ─── Logging de inicialização ───────────────────────────────────────────────
 logger.info('Iniciando Backend...');
@@ -116,6 +127,7 @@ try {
   apiRouter.put('/users/profile', requireAuthentication, ClientController.updateProfile);
   apiRouter.get('/users/initial-balance', requireAuthentication, ClientController.getInitialBalance);
   apiRouter.put('/users/initial-balance', requireAuthentication, ClientController.updateInitialBalance);
+  apiRouter.put('/users/ai-config', requireAuthentication, ClientController.updateAiConfig);
 
   // Rotas de dashboard
   apiRouter.get('/dashboard/summary', requireAuthentication, DashboardController.getSummary);
@@ -147,7 +159,11 @@ try {
   // Montar versionamento da API
   app.use('/api/v1', apiRouter);
 
-  console.log('[Backend] Rotas carregadas com sucesso.');
+  // Rota de documentação Swagger (apenas se carregado com sucesso)
+  if (swaggerDocument) {
+    app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    console.log('[Backend] Documentação Swagger disponível em /api/v1/docs');
+  }
 } catch (error: any) {
   initError = error;
   console.error('[Backend] Erro ao carregar módulos:', error);
@@ -166,12 +182,21 @@ try {
 }
 
 // ─── Error Handler global ──────────────────────────────────────────────────
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[Server] Erro não tratado:', err);
-  res.status(500).json({
+app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const requestId = (req as any).id; // ID gerado pelo pino-http
+  
+  logger.error({ 
+    err,
+    requestId,
+    url: req.url,
+    method: req.method 
+  }, '[Server] Erro não tratado');
+
+  res.status(err.status || 500).json({
     error: {
-      code: 'INTERNAL_ERROR',
+      code: err.code || 'INTERNAL_ERROR',
       message: 'Ocorreu um erro inesperado em nosso servidor.',
+      requestId, // RNF-04: Rastreabilidade
       details: process.env.NODE_ENV !== 'production' ? err.message : undefined,
     },
   });
