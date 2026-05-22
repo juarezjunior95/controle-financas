@@ -184,7 +184,7 @@ export default function ProfilePage() {
     setBalanceSuccessMsg("");
 
     const { data, error } = await fetchAPI<{ initialBalance: number }>(
-      "/clients/me",
+      "/users/initial-balance",
       {
         method: "PUT",
         token,

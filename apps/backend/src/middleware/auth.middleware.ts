@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { clerkMiddleware, getAuth } from '@clerk/express';
+import { ClientService } from '../modules/clients/client.service';
 
 /**
  * Interface estendida do Request para incluir os dados do Clerk.
@@ -12,7 +13,7 @@ export interface AuthenticatedRequest extends Request {
  * Middleware que exige autenticação via Clerk.
  * Retorna 401 se o usuário não estiver autenticado.
  */
-export const requireAuthentication = (req: Request, res: Response, next: NextFunction): void => {
+export const requireAuthentication = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const auth = getAuth(req);
 
   if (!auth.userId) {
@@ -27,9 +28,15 @@ export const requireAuthentication = (req: Request, res: Response, next: NextFun
   }
 
   // Anexa o objeto de autenticação ao request para uso nos controllers
-  // IMPORTANTE: Isso sobrescreve a função interna req.auth do Clerk.
-  // Use (req as any).auth nos controllers em vez de getAuth(req) para evitar conflitos.
   (req as AuthenticatedRequest).auth = auth;
+
+  // Garantir que o usuário exista no banco local: sincroniza do Clerk via upsert.
+  try {
+    await ClientService.syncFromClerk(auth.userId);
+  } catch (err) {
+    // Se falhar por problemas de DB/Clerk, encaminha o erro ao handler global
+    return next(err);
+  }
 
   next();
 };
